@@ -1,0 +1,1 @@
+This goes into output_dup2.txt
