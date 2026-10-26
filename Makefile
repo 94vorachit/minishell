@@ -2,22 +2,27 @@ NAME = minishell
 CC = cc
 CFLAGS = -Wall -Wextra -Werror
 
-SRC = src/main.c
+SRC = $(wildcard src/*.c) \
+	$(wildcard signal/*.c)
 OBJ = $(SRC:.c=.o)
+LDLIBS = -lreadline
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-    $(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+	$(MAKE) -C libft
+	$(CC) $(CFLAGS) $(OBJ) $(LDLIBS) libft/libft.a -o $(NAME)
 
 %.o: %.c
-    $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-    rm -f $(OBJ)
+	$(MAKE) clean -C ./libft/
+	rm -f $(OBJ)
 
 fclean: clean
-    rm -f $(NAME)
+	$(MAKE) fclean -C ./libft/
+	rm -f $(NAME)
 
 re: fclean all
 

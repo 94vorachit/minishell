@@ -369,7 +369,7 @@ readline()✓
 add_history()✓
 fork()✓
 execve()✓
-waitpid()
+waitpid()✓
 pipe()✓
 dup()✓
 dup2()✓
@@ -377,8 +377,8 @@ open()✓
 close()✓
 access()✓
 chdir()✓
-getcwd()
-signal()
+getcwd()✓
+signal()✓
 tcgetattr()✓
 tcsetattr()✓
 ```
