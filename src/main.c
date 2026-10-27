@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/26 20:21:44 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/27 14:55:02 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,6 +123,9 @@ int main(int ac, char **av, char **env)
 			ft_putstr_fd("exit\n", STDERR);
 			return (SUCCESS);
 		}
+		if (line)
+			add_history(line);
+		free(line);
     }
     return (0);
 }

@@ -1,0 +1,188 @@
+Your current project has the initialization stage working, but the shell does not execute commands yet. The next step is to implement the **input → tokenize → execute loop**.
+
+Current status:
+
+- Environment list is initialized in `src/main.c`
+- `SHLVL` is updated
+- `readline()` works
+- Signal handlers exist in `signal/signal.c`
+- The entered line is currently never processed or freed
+- No lexer, parser, builtins, pipes, redirections, or command execution exist yet
+
+## Recommended next milestone: simple commands
+
+First make these commands work:
+
+```bash
+pwd
+echo hello
+ls
+/bin/ls
+unknown_command
+```
+
+Implement the main loop approximately like this:
+
+```text
+while (readline):
+    if line is empty:
+        free line
+        continue
+
+    add line to history
+    tokenize line
+    validate syntax
+    expand variables
+    execute command
+    update exit status
+    free line and command data
+```
+
+## Suggested implementation order
+
+### 1. Add command data structures
+
+Extend `includes/minishell.h` with structures for:
+
+```c
+t_token
+t_command
+```
+
+For example, a command should eventually contain:
+
+```text
+argv
+input redirection
+output redirection
+append redirection
+heredoc delimiter
+next command in pipeline
+```
+
+### 2. Implement the lexer/tokenizer
+
+Create files such as:
+
+```text
+src/lexer.c
+src/token_utils.c
+```
+
+Support initially:
+
+```bash
+word
+"quoted text"
+'single quoted text'
+|
+<
+>
+>>
+<<
+```
+
+The lexer must preserve quote information so expansion can be handled correctly later.
+
+### 3. Implement syntax validation
+
+Reject invalid input such as:
+
+```bash
+|
+ls |
+ls >
+echo "unfinished
+```
+
+Set the exit status to `258` for syntax errors, matching Bash and the constant already defined in the header.
+
+### 4. Implement simple command execution
+
+For a command without pipes or redirections:
+
+```text
+if command is builtin:
+    execute builtin directly
+else:
+    fork()
+    child: execve()
+    parent: waitpid()
+```
+
+Use `PATH` to find commands such as `ls`, `cat`, and `grep`.
+
+### 5. Implement mandatory builtins
+
+Implement these one by one:
+
+```text
+echo
+cd
+pwd
+export
+unset
+env
+exit
+```
+
+Recommended order:
+
+1. `echo`
+2. `pwd`
+3. `env`
+4. `export`
+5. `unset`
+6. `cd`
+7. `exit`
+
+The existing `t_env` list can be reused, but you will need helpers for:
+
+```text
+find environment variable
+set/update variable
+remove variable
+convert linked list to char **
+free environment list
+```
+
+### 6. Add redirections and pipes
+
+After simple commands work:
+
+```bash
+echo hello > file
+cat < file
+echo hello >> file
+cat << EOF
+hello
+EOF
+```
+
+Then pipelines:
+
+```bash
+ls | grep .c
+cat file | sort | wc -l
+```
+
+### 7. Fix the current loop issues
+
+In `src/main.c`, the current loop should eventually:
+
+- call `add_history(line)` for non-empty input
+- free `line`
+- process `Ctrl+D` cleanly
+- update `g_data->status`
+- free all allocated command structures
+- free the environment before exiting
+
+Also, `sig_interrupt()` currently calls `exit(1)`, which would terminate the entire shell during heredoc handling. It should only terminate the heredoc child process, not the interactive parent shell.
+
+## Best immediate task
+
+Start with this focused target:
+
+> Implement a lexer and simple command executor so that `echo`, `pwd`, external commands, empty lines, unknown commands, and `Ctrl+D` work correctly.
+
+Do not start with pipes or heredocs yet. Establish this basic execution path first, then add redirections and pipelines.
