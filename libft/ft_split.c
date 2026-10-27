@@ -6,83 +6,84 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/22 19:04:08 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/22 19:04:09 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/27 16:14:54 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-static int	ft_count_words(const char *str, char *set)
+int	word_count(char const *s, char c)
 {
-	int	count;
 	int	i;
-	int	trigger;
+	int	count;
 
-	i = -1;
+	i = 0;
 	count = 0;
-	trigger = 0;
-	while (str[++i] != '\0')
+	while (s[i])
 	{
-		if (!ft_strchr(set, str[i]) && trigger == 0)
-		{
-			trigger = 1;
+		if (s[i] != c && (s[i + 1] == c || s[i + 1] == '\0'))
 			count++;
-		}
-		else if (ft_strchr(set, str[i]))
-			trigger = 0;
+		i++;
 	}
 	return (count);
 }
 
-static char	*ft_word_dup(const char *str, int start, int end)
+int	word_length(char const *s, char c)
 {
-	char	*word;
-	int		i;
+	int	i;
+	int	len;
 
 	i = 0;
-	word = malloc(sizeof(*word) * end - start + 1);
-	if (!word)
-		ft_error(2);
-	while (start < end)
-		word[i++] = str[start++];
-	word[i] = '\0';
-	return (word);
-}
-
-static char	**ft_to_create_tab(char **tab, const char *s, char *set)
-{
-	int		count;
-	int		i;
-	int		start;
-
-	i = 0;
-	count = 0;
-	start = -1;
-	while (i <= (int)ft_strlen(s))
+	len = 0;
+	while (s[i] != c && s[i] != '\0')
 	{
-		if (!ft_strchr(set, s[i]) && start < 0)
-			start = i;
-		else if ((ft_strchr(set, s[i]) || i == (int)ft_strlen(s)) && start >= 0)
-		{
-			tab[count] = ft_word_dup(s, start, i);
-			if (!tab[count] || !++count)
-				ft_error(2);
-			start = -1;
-		}
 		i++;
+		len++;
 	}
-	tab[count] = NULL;
-	return (tab);
+	return (len);
 }
 
-char	**ft_split(char const *s, char *set)
+char	**f(char const *s, char c, char **result, int words_count)
 {
-	char	**tab;
+	int	i;
+	int	j;
+	int	w_len;
 
-	if (!s || !*s)
-		return (0);
-	tab = malloc(sizeof(char *) * (ft_count_words(s, set) + 1));
-	if (!tab)
-		ft_error(2);
-	return (ft_to_create_tab(tab, s, set));
+	while (*s == c)
+		s++;
+	i = -1;
+	while (++i < words_count)
+	{
+		while (*s == c)
+			s++;
+		j = 0;
+		w_len = word_length(s, c);
+		result[i] = (char *)malloc(sizeof(char) * (w_len + 1));
+		if (!(result[i]))
+			return (NULL);
+		while (j < w_len)
+		{
+			result[i][j] = *s;
+			s++;
+			j++;
+		}
+		result[i][j] = '\0';
+	}
+	return (result);
+}
+
+char	**ft_split(char const *s, char c)
+{
+	char	**result;
+	int		wcount;
+
+	if (!s)
+		return (NULL);
+	wcount = word_count(s, c);
+	result = (char **)malloc(sizeof(char *) * (wcount + 1));
+	if (!(result))
+		return (NULL);
+	result = f(s, c, result, wcount);
+	result[wcount] = NULL;
+	return (result);
 }

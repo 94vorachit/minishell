@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/27 14:55:02 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 00:52:46 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 t_data	*g_data;
 
-static int	update_shlvl(t_env *env, int shlvl)
+int	update_shlvl(t_env *env, int shlvl)
 {
 	char	*level;
 	char	*new_value;
@@ -49,46 +49,70 @@ void	ft_shlvl(t_env *env)
 	}
 }
 
-t_env *ft_lstadd_val(char *value, t_env *next)
+void	ft_env_clear(t_env **env)
 {
-	t_env *new;
+    t_env	*current;
+    t_env	*next;
 
-	new = malloc(sizeof(t_env));
-	if (!new)
-		return (NULL);
-	new->value = value;
-	new->next = next;
-
-	return new;
+    current = *env;
+    while (current)
+    {
+        next = current->next;
+        free(current->value);
+        free(current);
+        current = next;
+    }
+    *env = NULL;
 }
 
-static int ft_init_env(t_env **mini_env, char **env)
+static t_env	*ft_env_new(char *value)
 {
-	t_env	*temp;
+	t_env	*new;
+
+	new = malloc(sizeof(*new));
+	if (!new)
+		return (NULL);
+	new->value = ft_strdup(value);
+	if (!new->value)
+	{
+		free(new);
+		return (NULL);
+	}
+	new->next = NULL;
+	return (new);
+}
+
+int	ft_init_env(t_env **mini_env, char **env)
+{
+	t_env	*new;
+	t_env	*last;
 	int		i;
 
 	*mini_env = NULL;
-	if (!env || !env[0])
-		return (0);
+	last = NULL;
 	i = 0;
-	temp = ft_lstadd_val(ft_strdup(env[i++]), NULL);
-	if (!temp)
-		return (-1);
-	*mini_env = temp;
-	while (env[i])
+	while (env && env[i])
 	{
-		temp->next = ft_lstadd_val(ft_strdup(env[i++]), NULL);
-		if (!temp->next)
+		new = ft_env_new(env[i++]);
+		if (!new)
+		{
+			ft_env_clear(mini_env);
 			return (-1);
-		temp = temp->next;
+		}
+		if (!*mini_env)
+			*mini_env = new;
+		else
+			last->next = new;
+		last = new;
 	}
-	return (0);	
+	return (0);
 }
 
 int	init(t_data *mini, char **env)
 {
 	mini->status = 0; //This sets the shell's initial exit status to success.
 	mini->cmd_count = 0; //No commands have been parsed yet.
+	mini->tokens = NULL;
 	if (ft_init_env(&mini->env, env) == -1)
 		return (-1);
 	ft_shlvl(mini->env);
@@ -110,10 +134,11 @@ int main(int ac, char **av, char **env)
     if (!g_data)
         return (ERROR);
     if (init(g_data, env) == -1)
-    {
-        free(g_data);
-        return (ERROR);
-    }
+	{
+		ft_env_clear(&g_data->env);
+		free(g_data);
+		return (ERROR);
+	}
     sig_init();
     while (1)
     {
@@ -123,9 +148,24 @@ int main(int ac, char **av, char **env)
 			ft_putstr_fd("exit\n", STDERR);
 			return (SUCCESS);
 		}
-		if (line)
-			add_history(line);
-		free(line);
+        if (line[0] == '\0')
+        {
+        	free(line);
+        	continue ;
+        }
+        if (lexer(line, &g_data->tokens) == 0)
+        {
+			// ft_print_tokens(g_data->tokens);
+        	g_data->status = ft_validate_syntax(g_data->tokens);
+        	if (g_data->status == SUCCESS)
+        		add_history(line);
+        }
+        else
+        	g_data->status = SYNTAX_ERROR;
+        ft_token_clear(&g_data->tokens);
+        free(line);
     }
-    return (0);
+	ft_env_clear(&g_data->env);
+	free(g_data);
+	return (SUCCESS);
 }

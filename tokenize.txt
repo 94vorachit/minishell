@@ -1,0 +1,350 @@
+I’ll review your current tokenizer snapshot and relate it to the lexer design needed for minishell.
+
+Read 
+Completed with input: {
+  "path": "/home/acer/.vscode-server/data/agentSessionData/a7511dcf-8f16-49da-8770-5b5278604b7b/attachments/e7b9a5d2-0986-487e-b3ea-96ba98f45708/file_token.c"
+}
+
+Your `file_token.c` is trying to split the input, but minishell tokenization needs more than `ft_split(line, ' ')`.
+
+For example:
+
+```bash
+echo "hello world" | cat > output
+```
+
+should become:
+
+```text
+WORD: echo
+WORD: hello world
+PIPE: |
+WORD: cat
+REDIR_OUT: >
+WORD: output
+```
+
+The quoted text must remain one word even though it contains a space.
+
+## 1. Define token types
+
+Add something like this to `includes/minishell.h`:
+
+```c
+typedef enum e_token_type
+{
+	T_WORD,
+	T_PIPE,
+	T_REDIR_IN,
+	T_REDIR_OUT,
+	T_APPEND,
+	T_HEREDOC
+}	t_token_type;
+
+typedef struct s_token
+{
+	char			*value;
+	t_token_type	type;
+	struct s_token	*next;
+}	t_token;
+```
+
+Then add the token list to `t_data`:
+
+```c
+typedef struct s_data
+{
+	t_env		*env;
+	t_token		*tokens;
+	int			cmd_count;
+	int			status;
+}	t_data;
+```
+
+A linked list is usually easier than allocating several arrays because you do not need to know the final token count before scanning.
+
+## 2. Scan the line from left to right
+
+Do not start with `ft_split`. Instead, process one character at a time:
+
+```text
+while line[i] != '\0':
+    skip spaces
+    if current character is an operator:
+        create operator token
+    else:
+        collect a WORD token
+```
+
+The operators are:
+
+```text
+|
+<
+>
+<<
+>>
+```
+
+Remember to check the two-character operators before the one-character operators:
+
+```c
+if (line[i] == '<' && line[i + 1] == '<')
+	/* HEREDOC */
+else if (line[i] == '>' && line[i + 1] == '>')
+	/* APPEND */
+else if (line[i] == '<')
+	/* REDIR_IN */
+else if (line[i] == '>')
+	/* REDIR_OUT */
+else if (line[i] == '|')
+	/* PIPE */
+```
+
+## 3. Collect a word
+
+A word continues until you reach:
+
+- whitespace outside quotes
+- `|`
+- `<`
+- `>`
+
+For example:
+
+```bash
+echo abc"def"ghi
+```
+
+must produce one word:
+
+```text
+abcdefghi
+```
+
+So you need to append characters into one result string rather than splitting each quoted section separately.
+
+The logic is:
+
+```text
+start with an empty word
+while not at the end:
+    if outside quotes and current character is whitespace/operator:
+        stop word
+    if current character is ':
+        collect until next '
+        append contents without quote characters
+    else if current character is ":
+        collect until next "
+        append contents without quote characters
+    else:
+        append current character
+```
+
+Examples:
+
+```text
+"hello world"  -> hello world
+'hello world'  -> hello world
+abc"def"       -> abcdef
+'a'"b"         -> ab
+```
+
+At the tokenization stage, you may remove quote characters, but keep in mind that expansion behavior differs between single and double quotes. A more complete design stores quote information while scanning.
+
+## 4. Detect unclosed quotes
+
+If the input contains:
+
+```bash
+echo "hello
+```
+
+the lexer must report an error instead of silently accepting it.
+
+Use a return value to distinguish success from failure:
+
+```c
+int	lexer(char *line, t_token **tokens);
+```
+
+Possible result:
+
+```text
+0    success
+-1   allocation error
+258  unclosed quote or syntax error
+```
+
+Print an error similar to:
+
+```text
+minishell: syntax error: unexpected end of file
+```
+
+Do not create a partial token list after an error. Free all tokens already allocated.
+
+## 5. Token creation helpers
+
+Your tokenizer will be clearer with small helpers:
+
+```c
+t_token	*token_new(char *value, t_token_type type);
+void	token_add_back(t_token **list, t_token *new_token);
+void	token_clear(t_token **list);
+```
+
+For example:
+
+```c
+static int	add_token(t_token **tokens, char *value, t_token_type type)
+{
+	t_token	*new_token;
+
+	new_token = token_new(value, type);
+	if (!new_token)
+		return (-1);
+	token_add_back(tokens, new_token);
+	return (0);
+}
+```
+
+Every allocated string must have exactly one owner. When token creation fails, free the temporary string and the entire list.
+
+## 6. Important problems in the current code
+
+In your current file:
+
+```c
+tokens = ft_split(line, ' ');
+```
+
+has several problems:
+
+```bash
+echo "hello world"
+```
+
+becomes incorrectly split into multiple pieces.
+
+It also cannot correctly handle:
+
+```bash
+echo a|cat
+echo >file
+echo 'a b'
+```
+
+Your `add_len()` function also has an indexing problem:
+
+```c
+if (token[i + 1] && token[i + 1] == '>')
+	i += 2;
+...
+i++;
+```
+
+For `>>`, this advances too far and can skip the character after the operator. More importantly, counting token capacity before parsing becomes complicated once quotes and expansions are supported.
+
+The current file also references:
+
+```c
+g_data->tokens
+t_token
+extract_token()
+```
+
+but these must be declared or implemented before it can compile.
+
+## 7. Recommended first version
+
+Implement these functions first:
+
+```c
+int		lexer(char *line, t_token **tokens);
+static int	lex_word(char *line, int *index, t_token **tokens);
+static int	lex_operator(char *line, int *index, t_token **tokens);
+static int	read_quote(char *line, int *index, char **word);
+```
+
+A useful high-level structure is:
+
+```c
+int	lexer(char *line, t_token **tokens)
+{
+	int	i;
+
+	i = 0;
+	*tokens = NULL;
+	while (line[i])
+	{
+		while (line[i] && is_space(line[i]))
+			i++;
+		if (!line[i])
+			break ;
+		if (line[i] == '|' || line[i] == '<' || line[i] == '>')
+		{
+			if (lex_operator(line, &i, tokens) == -1)
+				return (-1);
+		}
+		else
+		{
+			if (lex_word(line, &i, tokens) == -1)
+				return (-1);
+		}
+	}
+	return (0);
+}
+```
+
+Then test these inputs:
+
+```bash
+echo hello
+echo "hello world"
+echo 'hello world'
+echo abc"def"ghi
+ls|grep .c
+cat<input
+echo hello>>output
+cat << EOF
+```
+
+Expected tokens should be:
+
+```text
+echo hello
+WORD echo
+WORD hello
+
+ls|grep .c
+WORD ls
+PIPE |
+WORD grep
+WORD .c
+
+echo hello>>output
+WORD echo
+WORD hello
+APPEND >>
+WORD output
+```
+
+After the lexer works, the next stage is syntax validation. For example, reject:
+
+```bash
+|
+ls |
+echo >
+cat <<
+```
+
+The clean development order is:
+
+```text
+lexer
+→ syntax checker
+→ variable expansion
+→ parser into commands
+→ executor
+```

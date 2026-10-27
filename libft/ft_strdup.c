@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/22 19:04:27 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/22 19:04:28 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 00:37:17 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,22 @@
 
 char	*ft_strdup(const char *s1)
 {
-	size_t	size;
-	char	*s2;
+	char	*start;
+	int		i;
+	size_t	len;
 
 	if (!s1)
+		return (NULL);
+	len = ft_strlen(s1);
+	start = malloc(len + 1);
+	if (!start)
 		return (0);
-	size = ft_strlen(s1);
-	s2 = malloc(sizeof(*s2) * size + 1);
-	if (!s2)
-		ft_error(2);
-	ft_strlcpy(s2, s1, size + 1);
-	return (s2);
-}	
+	i = 0;
+	while (s1[i] != '\0')
+	{
+		start[i] = s1[i];
+		i++;
+	}
+	start[i] = 0;
+	return (start);
+}

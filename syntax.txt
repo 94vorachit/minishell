@@ -1,0 +1,57 @@
+It detects:
+
+```bash
+| echo
+echo |
+echo ||
+echo >
+echo <
+echo >>
+echo <<
+echo > |
+```
+
+It reports errors like:
+
+```text
+minishell: syntax error near unexpected token `newline'
+minishell: syntax error near unexpected token `|'
+```
+
+and returns:
+
+```c
+SYNTAX_ERROR
+```
+
+which is `258`.
+
+### Main loop changes
+
+In `src/main.c`:
+
+- Initializes `g_data->tokens`
+- Ignores empty lines
+- Runs the lexer
+- Runs `validate_syntax()`
+- Updates `g_data->status`
+- Adds only valid commands to history
+- Frees tokens and input lines
+
+The build passed successfully with:
+
+```bash
+make
+```
+
+I also tested:
+
+```bash
+echo ok
+echo ok |
+echo ok >
+| echo
+echo "unterminated
+```
+
+Syntax errors were detected correctly, and the shell continued accepting input afterward.
