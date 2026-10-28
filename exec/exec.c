@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 20:14:53 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 20:27:53 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,13 +77,45 @@ char	**env_to_char_array(t_env *env)
     return (arr);
 }
 
+char	*check_executable_in_dir(const char *dir, const char *cmd)
+{
+    char	*full_path;
+    char	*candidate;
+
+    full_path = ft_strjoin(dir, "/");
+    if (!full_path)
+        return (NULL);
+    candidate = ft_strjoin(full_path, cmd);
+    free(full_path);
+    if (!candidate)
+        return (NULL);
+    if (access(candidate, X_OK) == 0)
+        return (candidate);
+    free(candidate);
+    return (NULL);
+}
+
+static char	*search_in_paths(char **paths, const char *cmd)
+{
+    int		index;
+    char	*result;
+
+    index = 0;
+    while (paths[index])
+    {
+        result = check_executable_in_dir(paths[index], cmd);
+        if (result)
+            return (result);
+        index++;
+    }
+    return (NULL);
+}
+
 char	*find_executable_path(t_env *env, const char *cmd)
 {
     char	*path_env;
     char	**paths;
-    char	*tmp;
-    char	*full;
-    int		i;
+    char	*result;
 
     if (!cmd || cmd[0] == '\0')
         return (NULL);
@@ -95,22 +127,9 @@ char	*find_executable_path(t_env *env, const char *cmd)
     paths = ft_split(path_env, ':');
     if (!paths)
         return (NULL);
-    i = 0;
-    while (paths[i])
-    {
-        full = ft_strjoin(paths[i], "/");
-        tmp = ft_strjoin(full, cmd);
-        free(full);
-        if (access(tmp, X_OK) == 0)
-        {
-            free_split(paths);
-            return (tmp);
-        }
-        free(tmp);
-        i++;
-    }
+    result = search_in_paths(paths, cmd);
     free_split(paths);
-    return (NULL);
+    return (result);
 }
 
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
