@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:24:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:09:41 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 18:33:45 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,11 @@
 /**Checks whether a token type is a redirection.
  * 
  * It returns true for:
- * * T_REDIR_IN
- * * T_REDIR_OUT
- * * T_APPEND
- * * T_HEREDOC
+ * * `T_REDIR_IN`
+ * * `T_REDIR_OUT`
+ * * `T_APPEND`
+ * * `T_HEREDOC`
+ * 
  * This is used later to decide whether a token is a redirection operator.
  */
 int	ft_isredirection(t_token_type type)
@@ -28,9 +29,9 @@ int	ft_isredirection(t_token_type type)
 }
 
 /** Checks whether a character is one of the shell operators:
- * * |
- * * <
- * * >
+ * * `|`
+ * * `<`
+ * * `>`
  * 
  * This is used while scanning a word to stop reading when 
  * the parser hits an operator.
@@ -41,16 +42,17 @@ int	ft_isoperator(char c)
 }
 
 /**Reads a quoted section of a word.
+ * 
  * Example:
- * * "hello"
- * * 'abc'
+ * * `"hello"`
+ * * `'abc'`
  * 
  * How it works:
- * 1. save the quote character (' or ")
+ * 1. save the quote character (`'` or `"`)
  * 2. add the opening quote to the word
  * 3. move forward until the matching closing quote is found
  * 4. add the closing quote to the word
- * 5. if no closing quote exists, print a syntax error and return SYNTAX_ERROR
+ * 5. if no closing quote exists, print a syntax error and return `SYNTAX_ERROR`
  * 
  * This allows quoted words to be kept as one token even if they contain spaces. 
  */
@@ -84,7 +86,7 @@ int	ft_quote_word(char *line, int *index, char **word)
  * 
  * It continues until:
  * * it reaches a space
- * * it reaches an operator (|, <, >)
+ * * it reaches an operator (`|`, `<`, `>`)
  * * or the string ends
  * 
  * Inside the loop:
@@ -122,9 +124,9 @@ int	ft_read_word(char *line, int *index, char **word, int *started)
  * 
  * Steps:
  * 1. initialize the word as an empty string
- * 2. call ft_read_word
- * 3. if the word was empty, return 0
- * 4. otherwise add the word as a T_WORD token
+ * 2. call `ft_read_word`
+ * 3. if the word was empty, return `0`
+ * 4. otherwise add the word as a `T_WORD` token
  * 
  * This is the function that turns a raw text fragment into a proper token. 
  */
