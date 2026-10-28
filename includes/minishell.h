@@ -53,6 +53,16 @@ typedef struct s_data
 	int	status;
 }	t_data;
 
+typedef struct s_exp_state
+{
+	t_data	*data;
+	const char	*word;
+	size_t	*i;
+	char	**result;
+	int		in_single;
+	int		in_double;
+} t_exp_state;
+
 extern t_data	*g_data;
 
 void	ft_env_clear(t_env **env);
