@@ -1,0 +1,351 @@
+Read , lines 1 to 130
+Completed with input: {
+  "path": "/home/acer/42_code/myGit/minishell/exec/exec_utils.c",
+  "view_range": [
+    1,
+    130
+  ]
+}
+
+Read , lines 60 to 140
+Completed with input: {
+  "path": "/home/acer/42_code/myGit/minishell/includes/minishell.h",
+  "view_range": [
+    60,
+    140
+  ]
+}
+
+`exec_utils.c` contains helper functions for freeing command/environment memory and converting the shell environment into the format required by `execve()`.
+
+## 1. `ft_free_split`
+
+```c
+void	ft_free_split(char **arr)
+```
+
+Frees a dynamically allocated array of strings.
+
+Typical arrays created by `ft_split()` or `env_to_char_array()` look like:
+
+```text
+arr
+ ├── arr[0] -> "first string"
+ ├── arr[1] -> "second string"
+ ├── arr[2] -> NULL
+```
+
+The function:
+
+1. Returns immediately if `arr == NULL`.
+2. Loops through every string until the `NULL` terminator.
+3. Frees each string.
+4. Frees the array itself.
+
+It is used for values such as:
+
+```c
+char **paths = ft_split(path_env, ':');
+ft_free_split(paths);
+```
+
+Both the individual strings and the pointer array must be freed.
+
+---
+
+## 2. `ft_free_cmd`
+
+```c
+void	ft_free_cmd(t_cmd *cmd)
+```
+
+Releases all dynamically allocated memory owned by a command.
+
+A `t_cmd` contains:
+
+```c
+typedef struct s_cmd
+{
+	char	**argv;
+	char	*infile;
+	char	*outfile;
+	int		append;
+}	t_cmd;
+```
+
+The function performs the following cleanup:
+
+### Frees `argv`
+
+```c
+if (cmd->argv)
+{
+	i = 0;
+	while (cmd->argv[i])
+	{
+		free(cmd->argv[i]);
+		i++;
+	}
+	free(cmd->argv);
+	cmd->argv = NULL;
+}
+```
+
+For example:
+
+```text
+argv
+ ├── "echo"
+ ├── "hello"
+ └── NULL
+```
+
+It frees:
+
+- `"echo"`
+- `"hello"`
+- The `argv` array itself
+
+Then it sets `cmd->argv` to `NULL` to prevent it from pointing to freed memory.
+
+### Frees redirection filenames
+
+```c
+free(cmd->infile);
+free(cmd->outfile);
+```
+
+For a command such as:
+
+```bash
+cat < input.txt > output.txt
+```
+
+the function frees:
+
+- `cmd->infile`
+- `cmd->outfile`
+
+Finally, it resets the fields:
+
+```c
+cmd->infile = NULL;
+cmd->outfile = NULL;
+cmd->append = 0;
+```
+
+This allows the same `t_cmd` structure to be reused safely.
+
+The function also checks:
+
+```c
+if (!cmd)
+	return ;
+```
+
+so calling `ft_free_cmd(NULL)` is safe.
+
+---
+
+## 3. `ft_count_env`
+
+```c
+int	ft_count_env(t_env *env)
+```
+
+Counts the number of nodes in the shell environment linked list.
+
+The environment is stored as a linked list:
+
+```text
+env
+ ├── "USER=alice"
+ ├── "PATH=/usr/bin:/bin"
+ ├── "HOME=/home/alice"
+ └── NULL
+```
+
+The function walks through the list:
+
+```c
+count = 0;
+while (env)
+{
+	count++;
+	env = env->next;
+}
+```
+
+For three environment nodes, it returns:
+
+```c
+3
+```
+
+This count is needed to allocate the array used by `execve()`:
+
+```c
+arr = malloc(sizeof(char *) * (ft_count_env(env) + 1));
+```
+
+The additional `+ 1` is for the final `NULL` pointer.
+
+---
+
+## 4. `ft_copy_env`
+
+```c
+int	ft_copy_env(char **arr, t_env *env)
+```
+
+Copies the environment linked list into a NULL-terminated array of strings.
+
+The input is a linked list:
+
+```text
+env
+ ├── "USER=alice"
+ ├── "PATH=/usr/bin:/bin"
+ └── NULL
+```
+
+The result becomes:
+
+```text
+arr
+ ├── "USER=alice"
+ ├── "PATH=/usr/bin:/bin"
+ └── NULL
+```
+
+For each environment node, it duplicates the string:
+
+```c
+arr[i] = ft_strdup(env->value);
+```
+
+This is important because the array must own independent copies of the strings.
+
+### Allocation failure handling
+
+If `ft_strdup()` fails:
+
+```c
+if (!arr[i])
+{
+	ft_free_split(arr);
+	return (-1);
+}
+```
+
+the function:
+
+1. Frees all previously copied strings.
+2. Frees the array.
+3. Returns `-1`.
+
+On success, it returns `0`.
+
+The caller must have initialized the first element:
+
+```c
+arr[0] = NULL;
+```
+
+This is done by `env_to_char_array()` before calling `ft_copy_env()`. That allows `ft_free_split()` to safely identify the copied entries if allocation fails.
+
+---
+
+## 5. `env_to_char_array`
+
+```c
+char	**env_to_char_array(t_env *env)
+```
+
+Converts the shell's linked-list environment into the format required by `execve()`.
+
+`execve()` expects:
+
+```c
+char *const envp[]
+```
+
+which is effectively a NULL-terminated `char **` array:
+
+```text
+envp
+ ├── "USER=alice"
+ ├── "PATH=/usr/bin:/bin"
+ ├── "HOME=/home/alice"
+ └── NULL
+```
+
+The function works in three steps.
+
+### Step 1: Allocate the array
+
+```c
+arr = malloc(sizeof(char *) * (ft_count_env(env) + 1));
+```
+
+It allocates space for:
+
+- One pointer per environment variable
+- One additional `NULL` terminator
+
+### Step 2: Initialize the array
+
+```c
+arr[0] = NULL;
+```
+
+This is important for safe cleanup if copying fails immediately.
+
+### Step 3: Copy the environment
+
+```c
+if (ft_copy_env(arr, env) == -1)
+	return (NULL);
+```
+
+If copying fails, `ft_copy_env()` already frees the allocated memory, so `env_to_char_array()` only needs to return `NULL`.
+
+On success, it returns the completed array.
+
+It is used before executing a program:
+
+```c
+envp = env_to_char_array(data->env);
+execve(exec_path, cmd->argv, envp);
+```
+
+After `execve()` or after the child finishes, the caller must free it:
+
+```c
+ft_free_split(envp);
+```
+
+## Overall relationship
+
+```text
+t_env linked list
+        |
+        v
+ft_count_env()
+        |
+        v
+allocate char **
+        |
+        v
+ft_copy_env()
+        |
+        v
+char **envp for execve()
+```
+
+The cleanup functions work in the opposite direction:
+
+```text
+char **envp  -> ft_free_split()
+t_cmd        -> ft_free_cmd()
+```
