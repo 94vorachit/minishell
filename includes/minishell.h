@@ -45,11 +45,20 @@ typedef struct s_env
 	struct s_env	*next;
 }	t_env;
 
+typedef struct s_cmd
+{
+    char	**argv;
+    char	*infile;
+    char	*outfile;
+    int		append;
+	struct s_cmd	*next;
+}	t_cmd;
+
 typedef struct s_data
 {
 	t_token	*tokens;
 	t_env	*env;
-	// t_cmd	*commands;
+	t_cmd	*commands;
 	// pid_t	*fam;
 	int	cmd_count;
 	int	status;
@@ -64,14 +73,6 @@ typedef struct s_exp_state
 	int		in_single;
 	int		in_double;
 } t_exp_state;
-
-typedef struct s_cmd
-{
-    char	**argv;
-    char	*infile;
-    char	*outfile;
-    int		append;
-}	t_cmd;
 
 extern t_data	*g_data;
 
@@ -121,9 +122,13 @@ int		expand_tokens(t_data *data, t_token *tokens);
 
 char	*env_get(t_env *env, const char *name);
 
+void	ft_free_split(char **arr);
 char	**env_to_char_array(t_env *env);
-void	free_cmd(t_cmd *cmd);
+void	ft_free_cmd(t_cmd *cmd);
+int		ft_count_env(t_env *env);
+int		ft_copy_env(char **arr, t_env *env);
 char	*find_executable_path(t_env *env, const char *cmd);
+int		parse_redirections(t_token *tokens, t_cmd *cmd);
 int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
 int		execute_simple_cmd(t_data *data, t_cmd *cmd);
 

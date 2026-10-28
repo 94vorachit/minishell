@@ -26,6 +26,7 @@ void	free_shell(void)
 	rl_clear_history();
 	if (g_data)
 	{
+		ft_token_clear(&g_data->tokens);
 		ft_env_clear(&g_data->env);
 		free(g_data);
 		g_data = NULL;
@@ -203,7 +204,7 @@ int main(int ac, char **av, char **env)
                         execute_simple_cmd(g_data, &cmd);
                     else
                         g_data->status = 2;
-                    free_cmd(&cmd);
+                    ft_free_cmd(&cmd);
                     add_history(line);
                 }
             }
