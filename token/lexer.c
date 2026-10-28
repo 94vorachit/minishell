@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:24:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 17:49:18 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 17:53:02 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,6 +73,16 @@ char	*ft_operator_value(char *line, int *index, t_token_type *type)
 	return (NULL);
 }
 
+/**
+ * Takes the current operator and turns it into a real token.
+ * Flow:
+ * 1. detect the operator string with ft_operator_value
+ * 2. if detection fails, return error
+ * 3. advance the input index
+ * 4. add the token to the token list with ft_add_token
+ * 
+ * This is the step that converts raw shell operators into token objects.
+ */
 int	ft_lex_operator(char *line, int *index, t_token **tokens)
 {
 	char			*value;
@@ -87,6 +97,19 @@ int	ft_lex_operator(char *line, int *index, t_token **tokens)
 	return (0);
 }
 
+/**
+ * Main lexer entry point.
+ * It walks the whole input string from left to right.
+ * For each part:
+ * 1. skip spaces
+ * 2. stop if the string ends
+ * 3. decide whether the current character starts an operator
+ * 4. if yes: call ft_lex_operator
+ * 5.otherwise: call ft_lex_word
+ * 6. if any step fails, clear the token list and return an error
+ * 
+ * This function builds the full token list from the raw command line.
+ */
 int	lexer(char *line, t_token **tokens)
 {
 	int	index;
