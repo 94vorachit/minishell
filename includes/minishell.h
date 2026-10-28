@@ -98,6 +98,19 @@ int		lexer(char *line, t_token **tokens);
 
 int		ft_validate_syntax(t_token *tokens);
 
+int	is_var_start(char c);
+int	is_var_char(char c);
+int	is_var_name_char(char c);
+char	*append_text(char *result, const char *text);
+char	*append_char(char *result, char c);
+int	expand_status_var(t_data *data, char **result, size_t *i);
+int	expand_env_var(t_data *data, const char *word, size_t *i, char **result);
+int	handle_dollar(t_data *data, const char *word, size_t *i, char **result);
+int	handle_single_quote(int *in_single, size_t *i);
+int	handle_double_quote(int *in_double, size_t *i);
+int	append_literal_char(char **result, const char *word, size_t *i);
+int	process_char(t_exp_state *state);
+
 char	*env_get(t_env *env, const char *name);
 char	*expand_word(t_data *data, const char *word);
 int		expand_tokens(t_data *data, t_token *tokens);
