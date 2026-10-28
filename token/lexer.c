@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:24:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 17:53:02 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 18:39:18 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
  * * token type
  * 
  * Example output:
- * * value = [|], type = 0
+ * * `value = [|], type = 0`
  * 
  * This is useful for debugging the lexer.
  */
@@ -38,18 +38,19 @@ void	ft_print_tokens(t_token *tokens)
  * Detects and creates the value string for operators.
  * 
  * It checks in order:
- * * pipe |
- * * heredoc <<
- * * append >>
- * * input redirect <
- * * output redirect >
+ * * pipe `|`
+ * * heredoc `<<`
+ * * append `>>`
+ * * input redirect `<`
+ * * output redirect `>`
+ * 
  * It uses helper functions to decide which operator matches 
  * the current character.
  * 
  * Important behavior:
- * * << and >> consume two characters
+ * * `<<` and `>>` consume two characters
  * * the index is advanced in the helper functions
- * * it returns the string for the operator, such as |, <, >>, etc.
+ * * it returns the string for the operator, such as `|`, `<`, `>>`, etc.
  */
 char	*ft_operator_value(char *line, int *index, t_token_type *type)
 {
@@ -75,11 +76,12 @@ char	*ft_operator_value(char *line, int *index, t_token_type *type)
 
 /**
  * Takes the current operator and turns it into a real token.
+ * 
  * Flow:
- * 1. detect the operator string with ft_operator_value
+ * 1. detect the operator string with `ft_operator_value`
  * 2. if detection fails, return error
  * 3. advance the input index
- * 4. add the token to the token list with ft_add_token
+ * 4. add the token to the token list with `ft_add_token`
  * 
  * This is the step that converts raw shell operators into token objects.
  */
@@ -99,13 +101,14 @@ int	ft_lex_operator(char *line, int *index, t_token **tokens)
 
 /**
  * Main lexer entry point.
+ * 
  * It walks the whole input string from left to right.
  * For each part:
  * 1. skip spaces
  * 2. stop if the string ends
  * 3. decide whether the current character starts an operator
- * 4. if yes: call ft_lex_operator
- * 5.otherwise: call ft_lex_word
+ * 4. if yes: call `ft_lex_operator`
+ * 5. otherwise: call `ft_lex_word`
  * 6. if any step fails, clear the token list and return an error
  * 
  * This function builds the full token list from the raw command line.
