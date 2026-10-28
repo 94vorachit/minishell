@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 14:45:57 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 14:51:20 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 t_data	*g_data;
 
-static void	free_shell(void)
+void	free_shell(void)
 {
 	rl_clear_history();
 	if (g_data)
