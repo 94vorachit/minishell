@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 00:52:46 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 01:21:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,23 @@ void	ft_shlvl(t_env *env)
 	}
 }
 
+char	*env_get(t_env *env, const char *name)
+{
+    size_t	name_len;
+
+    if (!name || name[0] == '\0')
+        return (NULL);
+    name_len = ft_strlen(name);
+    while (env)
+    {
+        if (ft_strncmp(env->value, name, name_len) == 0
+            && env->value[name_len] == '=')
+            return (env->value + name_len + 1);
+        env = env->next;
+    }
+    return (NULL);
+}
+
 void	ft_env_clear(t_env **env)
 {
     t_env	*current;
@@ -65,7 +82,7 @@ void	ft_env_clear(t_env **env)
     *env = NULL;
 }
 
-static t_env	*ft_env_new(char *value)
+t_env	*ft_env_new(char *value)
 {
 	t_env	*new;
 
@@ -158,7 +175,12 @@ int main(int ac, char **av, char **env)
 			// ft_print_tokens(g_data->tokens);
         	g_data->status = ft_validate_syntax(g_data->tokens);
         	if (g_data->status == SUCCESS)
-        		add_history(line);
+			{
+				if (expand_tokens(g_data, g_data->tokens) == -1)
+					g_data->status = ERROR;
+				else
+					add_history(line);
+			}
         }
         else
         	g_data->status = SYNTAX_ERROR;

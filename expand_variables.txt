@@ -1,0 +1,479 @@
+Variable expansion should happen **after lexing and before execution**.
+
+Example:
+
+```bash
+NAME=Alice
+echo "Hello $NAME"
+```
+
+The shell should execute:
+
+```text
+argv[0] = "echo"
+argv[1] = "Hello Alice"
+```
+
+## 1. Expansion rules to support
+
+For the mandatory minishell project, support:
+
+```bash
+$USER
+${USER}       # usually optional unless your parser supports braces
+$?
+```
+
+Examples:
+
+```bash
+echo $USER
+echo "$HOME/bin"
+echo $?
+```
+
+### Normal text
+
+```bash
+echo hello$USER
+```
+
+If `USER=alice`:
+
+```text
+helloalice
+```
+
+### Undefined variables
+
+```bash
+echo $DOES_NOT_EXIST
+```
+
+Result:
+
+```text
+
+```
+
+An unset variable expands to an empty string.
+
+### Special `$?`
+
+`$?` expands to the previous command's exit status:
+
+```bash
+false
+echo $?
+```
+
+Output:
+
+```text
+1
+```
+
+You should store this in:
+
+```c
+g_data->status
+```
+
+## 2. Quote behavior
+
+This is the most important part.
+
+### Single quotes: no expansion
+
+```bash
+echo '$USER'
+```
+
+Output:
+
+```text
+$USER
+```
+
+Everything inside single quotes remains literal.
+
+### Double quotes: expansion is allowed
+
+```bash
+echo "$USER"
+```
+
+If `USER=alice`:
+
+```text
+alice
+```
+
+### Unquoted expansion
+
+```bash
+echo $USER
+```
+
+Expansion happens, and later word splitting may apply depending on your implementation.
+
+For the mandatory project, keep track of whether the value is quoted. A simple expansion scanner should know:
+
+```c
+int in_single_quote;
+int in_double_quote;
+```
+
+Rules:
+
+```text
+' -> toggle single quote if not inside double quotes
+" -> toggle double quote if not inside single quotes
+$ -> expand unless inside single quotes
+```
+
+## 3. Recommended processing order
+
+Your complete command processing should eventually be:
+
+```text
+readline()
+    ↓
+lexer
+    ↓
+syntax validation
+    ↓
+quote removal + variable expansion
+    ↓
+redirection parsing
+    ↓
+execution
+```
+
+A useful design is:
+
+```c
+tokens = lexer(line);
+if (syntax_error(tokens))
+    return;
+
+expand_tokens(tokens, g_data);
+remove_quotes(tokens);
+commands = build_commands(tokens);
+execute(commands);
+```
+
+Do not expand the entire input string before lexing. For example, this would be incorrect:
+
+```bash
+echo '$USER'
+```
+
+If you expand the complete line first, you might incorrectly replace `$USER` inside single quotes.
+
+## 4. Environment lookup
+
+Your environment currently uses a linked list:
+
+```c
+typedef struct s_env
+{
+    char            *value;
+    struct s_env    *next;
+}   t_env;
+```
+
+Each value looks like:
+
+```text
+USER=alice
+HOME=/home/alice
+PATH=/usr/bin:/bin
+```
+
+Create a helper:
+
+```c
+char *env_get(t_env *env, const char *name);
+```
+
+Behavior:
+
+```text
+env_get(env, "USER") -> "alice"
+env_get(env, "HOME") -> "/home/alice"
+env_get(env, "MISSING") -> NULL
+```
+
+Important: return the value after the `=` and not the whole string.
+
+For example:
+
+```c
+static int env_name_matches(const char *entry, const char *name, size_t len)
+{
+    return (ft_strncmp(entry, name, len) == 0
+        && entry[len] == '=');
+}
+```
+
+The variable name consists of:
+
+```text
+letters: A-Z, a-z
+digits: 0-9
+underscore: _
+```
+
+But a variable name cannot start with a digit.
+
+So in:
+
+```bash
+echo $USER123
+```
+
+the variable name is `USER123`.
+
+For a `$` not followed by a valid variable name:
+
+```bash
+echo $
+echo $-
+echo $+
+```
+
+You should generally leave the `$` literal unless it is `$?`.
+
+## 5. Expansion algorithm
+
+For each token, scan its text character by character.
+
+Pseudocode:
+
+```text
+result = empty string
+i = 0
+in_single_quote = false
+in_double_quote = false
+
+while text[i] exists:
+    if text[i] == '\'' and not in_double_quote:
+        in_single_quote = !in_single_quote
+        do not copy quote
+        i++
+        continue
+
+    if text[i] == '"' and not in_single_quote:
+        in_double_quote = !in_double_quote
+        do not copy quote
+        i++
+        continue
+
+    if text[i] != '$' or in_single_quote:
+        append text[i] to result
+        i++
+        continue
+
+    if text[i + 1] == '?':
+        append integer_to_string(g_data->status)
+        i += 2
+        continue
+
+    if text[i + 1] is a valid variable-name character:
+        start = i + 1
+        advance while valid variable-name character
+        name = text[start..i]
+        value = env_get(env, name)
+        append value if found
+        continue
+
+    append '$' to result
+    i++
+```
+
+The output should not contain quote characters because quote removal is part of this phase.
+
+Examples:
+
+```text
+input:  '$USER'
+output: $USER
+
+input:  "$USER"
+output: alice
+
+input:  abc$USER
+output: abcalice
+
+input:  $MISSING
+output: ""
+```
+
+## 6. Avoid repeated string allocation
+
+A simple implementation can use a helper:
+
+```c
+char *str_append(char *current, const char *addition);
+```
+
+But repeatedly joining strings can become inefficient. For the first implementation, correctness is more important. Use:
+
+```text
+result = ft_strdup("")
+result = append(result, piece)
+```
+
+Make sure every failed allocation is handled explicitly and all intermediate strings are freed.
+
+Useful helpers:
+
+```c
+char    *expand_word(t_data *data, const char *word);
+char    *expand_variable(t_data *data, const char *name);
+char    *env_get(t_env *env, const char *name);
+int     is_var_start(char c);
+int     is_var_char(char c);
+```
+
+## 7. `$?` and command status
+
+Update the status after every command:
+
+```bash
+false
+echo $?
+```
+
+Execution should do something like:
+
+```c
+g_data->status = wait_for_child(...);
+```
+
+Builtins also need to set it:
+
+```text
+cd existing_directory -> 0
+cd missing_directory  -> 1
+export invalid_name   -> 1
+exit                  -> chosen exit status
+```
+
+Then expansion reads:
+
+```c
+g_data->status
+```
+
+Do not use the process's current `errno` for `$?`.
+
+## 8. Redirection and heredoc exceptions
+
+Expansion behavior differs depending on the token type.
+
+### Redirection filename
+
+This should expand:
+
+```bash
+cat < $FILE
+echo hello > "$OUT"
+```
+
+### Heredoc delimiter
+
+The delimiter itself should have quotes removed, but should not be expanded:
+
+```bash
+cat << '$END'
+```
+
+The delimiter is:
+
+```text
+$END
+```
+
+For the heredoc body:
+
+```bash
+cat << EOF
+$USER
+EOF
+```
+
+`$USER` should expand.
+
+But:
+
+```bash
+cat << 'EOF'
+$USER
+EOF
+```
+
+`$USER` should remain literal.
+
+Therefore, store metadata on the heredoc delimiter:
+
+```c
+typedef struct s_redir
+{
+    char *word;
+    int   quoted;
+    ...
+} t_redir;
+```
+
+Set `quoted = 1` if the delimiter originally contained quotes.
+
+## 9. Recommended first tests
+
+Test expansion before adding complicated word splitting:
+
+```bash
+echo $USER
+echo "$USER"
+echo '$USER'
+echo hello$USER
+echo "$HOME/bin"
+echo $UNDEFINED
+echo $?
+echo "$?"
+echo '$?'
+echo $
+echo $-
+echo abc$USER123
+```
+
+Also test adjacent variables:
+
+```bash
+echo "$USER:$HOME"
+```
+
+And command status:
+
+```bash
+/bin/false
+echo $?
+/bin/true
+echo $?
+```
+
+## Suggested implementation milestone
+
+Implement these in order:
+
+1. `env_get()`
+2. `is_var_start()` and `is_var_char()`
+3. `expand_word()`
+4. `$?` support using `g_data->status`
+5. quote removal
+6. expansion for ordinary command arguments
+7. expansion for redirection filenames
+8. heredoc delimiter/body rules
+
+The key design decision is: **do not treat quotes as ordinary characters during expansion**. Track quote state while scanning each token, expand only where allowed, and return a new cleaned string.

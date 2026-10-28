@@ -81,4 +81,8 @@ int		lexer(char *line, t_token **tokens);
 
 int		ft_validate_syntax(t_token *tokens);
 
+char	*env_get(t_env *env, const char *name);
+char	*expand_word(t_data *data, const char *word);
+int		expand_tokens(t_data *data, t_token *tokens);
+
 #endif

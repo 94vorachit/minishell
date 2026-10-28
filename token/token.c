@@ -31,6 +31,8 @@ int	ft_quote_word(char *line, int *index, char **word)
 	char	quote;
 
 	quote = line[*index];
+	if (ft_add_char(word, quote) == -1)
+		return (-1);
 	(*index)++;
 	while (line[*index] && line[*index] != quote)
 	{
@@ -44,6 +46,8 @@ int	ft_quote_word(char *line, int *index, char **word)
 			"minishell: syntax error: unexpected end of file\n", STDERR);
 		return (SYNTAX_ERROR);
 	}
+	if (ft_add_char(word, quote) == -1)
+		return (-1);
 	(*index)++;
 	return (0);
 }
