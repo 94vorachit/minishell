@@ -8,6 +8,8 @@
 # include <termios.h>
 # include <readline/readline.h>
 # include <readline/history.h>
+# include <sys/types.h>
+# include <sys/wait.h>
 
 # define STDIN 0
 # define STDOUT 1
@@ -63,6 +65,14 @@ typedef struct s_exp_state
 	int		in_double;
 } t_exp_state;
 
+typedef struct s_cmd
+{
+    char	**argv;
+    char	*infile;
+    char	*outfile;
+    int		append;
+}	t_cmd;
+
 extern t_data	*g_data;
 
 void	ft_env_clear(t_env **env);
@@ -110,5 +120,11 @@ char	*expand_word(t_data *data, const char *word);
 int		expand_tokens(t_data *data, t_token *tokens);
 
 char	*env_get(t_env *env, const char *name);
+
+char	**env_to_char_array(t_env *env);
+void	free_cmd(t_cmd *cmd);
+char	*find_executable_path(t_env *env, const char *cmd);
+int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
+int		execute_simple_cmd(t_data *data, t_cmd *cmd);
 
 #endif

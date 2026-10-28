@@ -6,13 +6,20 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 14:51:20 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 19:42:57 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 t_data	*g_data;
+
+void	ft_error(int error_code)
+{
+	(void)error_code;
+	ft_putstr_fd("minishell: memory allocation failed\n", STDERR);
+	exit(ERROR);
+}
 
 void	free_shell(void)
 {
@@ -152,6 +159,7 @@ int	init(t_data *mini, char **env)
 int main(int ac, char **av, char **env)
 {
     char	*line;
+	t_cmd	cmd;
     
     (void) av;
 	if (ac != 1)
@@ -183,22 +191,27 @@ int main(int ac, char **av, char **env)
         {
         	free(line);
         	continue ;
-        }
-        if (lexer(line, &g_data->tokens) == 0)
+        }        if (lexer(line, &g_data->tokens) == 0)
         {
-			
-        	g_data->status = ft_validate_syntax(g_data->tokens);
-        	if (g_data->status == SUCCESS)
-			{
-				// ft_print_tokens(g_data->tokens);
-				if (expand_tokens(g_data, g_data->tokens) == -1)
-					g_data->status = ERROR;
-				else
-					add_history(line);
-			}
+            if (ft_validate_syntax(g_data->tokens) == SUCCESS)
+            {
+                if (expand_tokens(g_data, g_data->tokens) == -1)
+                    g_data->status = ERROR;
+                else
+                {
+                    if (build_simple_cmd(g_data->tokens, &cmd) == 0)
+                        execute_simple_cmd(g_data, &cmd);
+                    else
+                        g_data->status = 2;
+                    free_cmd(&cmd);
+                    add_history(line);
+                }
+            }
+            else
+                g_data->status = SYNTAX_ERROR;
         }
         else
-        	g_data->status = SYNTAX_ERROR;
+            g_data->status = SYNTAX_ERROR;
         ft_token_clear(&g_data->tokens);
         free(line);
     }

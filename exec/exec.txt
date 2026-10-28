@@ -1,0 +1,221 @@
+I’ll map the existing token structures and the current executor gap, then I’ll give you the exact minimal execution path to implement next without jumping ahead into pipes or redirection.
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/includes/minishell.h)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/lexer.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/token_utils.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/syntax.c)
+
+## Step 2: simple command execution
+
+The shell is already at the right place: main.c validates syntax and expands tokens, but it still does not actually run anything. The next step is to turn the expanded token list into one simple command and execute it.
+
+### 1) Add a minimal command structure
+Add this to minishell.h:
+
+```c
+typedef struct s_cmd
+{
+	char	**argv;
+	char	*infile;
+	char	*outfile;
+	int		append;
+	int		heredoc;
+}	t_cmd;
+```
+
+You do not need full pipeline support yet. For now, a command is just:
+
+- `argv` for arguments
+- optional `infile`
+- optional `outfile`
+- `append` flag for `>>`
+
+---
+
+### 2) Build one command from tokens
+After syntax validation and variable expansion, create a function like:
+
+```c
+int build_simple_cmd(t_token *tokens, t_cmd *cmd)
+{
+	// 1. collect words into argv
+	// 2. stop at pipe or redirection
+	// 3. if token is < or >, read following word as file
+	// 4. end argv with NULL
+}
+```
+
+Example flow:
+
+```c
+t_token *cur = tokens;
+int argc = 0;
+
+while (cur && cur->type != T_PIPE)
+{
+	if (cur->type == T_WORD)
+	{
+		argc++;
+		cur = cur->next;
+	}
+	else if (cur->type == T_REDIR_IN && cur->next && cur->next->type == T_WORD)
+	{
+		cmd->infile = ft_strdup(cur->next->value);
+		cur = cur->next->next;
+	}
+	else if ((cur->type == T_REDIR_OUT || cur->type == T_APPEND)
+		&& cur->next && cur->next->type == T_WORD)
+	{
+		cmd->outfile = ft_strdup(cur->next->value);
+		cmd->append = (cur->type == T_APPEND);
+		cur = cur->next->next;
+	}
+	else
+		return (-1);
+}
+```
+
+Then allocate:
+
+```c
+cmd->argv = malloc(sizeof(char *) * (argc + 1));
+cmd->argv[argc] = NULL;
+```
+
+This is the core of the parser for now.
+
+---
+
+### 3) Execute a simple command
+
+Create a function like:
+
+```c
+int execute_simple_cmd(t_data *data, t_cmd *cmd)
+{
+	pid_t	pid;
+	int		status;
+
+	if (!cmd || !cmd->argv || !cmd->argv[0])
+		return (SUCCESS);
+
+	// builtins later: echo, pwd, env, exit...
+	// for now, handle external command only
+
+	pid = fork();
+	if (pid == 0)
+	{
+		// child: set redirections if needed
+		// execve
+	}
+	waitpid(pid, &status, 0);
+	data->status = WEXITSTATUS(status);
+	return (SUCCESS);
+}
+```
+
+In the child:
+
+```c
+char *path = find_executable_path(data->env, cmd->argv[0]);
+if (!path)
+{
+	ft_putstr_fd("minishell: command not found\n", STDERR);
+	exit(127);
+}
+execve(path, cmd->argv, env_to_char_array(data->env));
+perror("execve");
+exit(127);
+```
+
+---
+
+### 4) Implement `find_executable_path`
+Use `PATH` from the environment:
+
+```c
+char *find_executable_path(t_env *env, char *cmd)
+{
+	char *path_env;
+	char **paths;
+	char *full;
+	int i;
+
+	if (ft_strchr(cmd, '/'))
+		return (ft_strdup(cmd));
+
+	path_env = env_get(env, "PATH");
+	if (!path_env)
+		return (NULL);
+
+	paths = ft_split(path_env, ':');
+	...
+}
+```
+
+For each piece:
+
+```c
+full = ft_strjoin(paths[i], "/");
+tmp = ft_strjoin(full, cmd);
+free(full);
+```
+
+Then check `access(tmp, X_OK)`.
+
+---
+
+### 5) Minimal test cases for this stage
+Before adding pipes, make these work:
+
+```bash
+pwd
+echo hello
+ls
+/bin/ls
+unknown_command
+```
+
+This is the minimum working command loop.
+
+---
+
+### 6) Very important rule
+Do not try to do pipes or heredoc yet. Keep it to:
+
+- 1 command
+- no `|`
+- no `<<`
+- no `>>` except optional simple outfile handling
+
+That keeps the logic clean and matches the project progression from your notes.
+
+---
+
+### 7) Suggested order for this phase
+1. `t_cmd` definition
+2. `build_simple_cmd()`
+3. `find_executable_path()`
+4. `execute_simple_cmd()`
+5. test `pwd`, `echo`, `ls`, `unknown_command`
+6. only then add builtins
+
+---
+
+### 8) The exact place to plug it in
+In main.c, after expansion and syntax validation, add:
+
+```c
+t_cmd cmd;
+
+build_simple_cmd(g_data->tokens, &cmd);
+execute_simple_cmd(g_data, &cmd);
+free_cmd(&cmd);
+```
+
+This is the next real milestone.
+
+If you want, I can give you the exact code for `build_simple_cmd()` and `find_executable_path()` in the same style as your project.
