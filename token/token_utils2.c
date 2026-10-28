@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:15:50 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:18:51 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 18:31:45 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 /** Adds a new token to the token list.
  * 
- * 1. creates a new token with ft_token_new
- * 2. if creation fails, frees the value string and returns -1
- * 3. otherwise appends it to the list with ft_token_add_back
+ * 1. creates a new token with `ft_token_new`
+ * 2. if creation fails, frees the value string and returns `-1`
+ * 3. otherwise appends it to the list with `ft_token_add_back`
  * 
  * This is the standard way to insert a token into the linked list.
  */
@@ -65,9 +65,9 @@ int	ft_add_char(char **word, char c)
 /** Allocates and initializes a new token node.
  * 
  * It sets:
- * * value
- * * type
- * * next = NULL
+ * * `value`
+ * * `type`
+ * * `next = NULL`
  * 
  * This creates the linked-list node that stores one token.
  */
@@ -109,9 +109,9 @@ void	ft_token_add_back(t_token **tokens, t_token *new_token)
 /** Frees the entire token list.
  * 
  * 1. walks through each node
- * 2. frees current->value
+ * 2. frees `current->value`
  * 3. frees the token node itself
- * 4. sets the list pointer to NULL
+ * 4. sets the list pointer to `NULL`
  * 
  This is used when syntax errors occur or when the shell is cleaning up. 
  */
