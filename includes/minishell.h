@@ -20,20 +20,20 @@
 
 typedef enum e_token_type
 {
-    T_WORD,
-    T_PIPE,
-    T_REDIR_IN,
-    T_REDIR_OUT,
-    T_APPEND,
-    T_HEREDOC
+	T_WORD,
+	T_PIPE,
+	T_REDIR_IN,
+	T_REDIR_OUT,
+	T_APPEND,
+	T_HEREDOC
 }	t_token_type;
 
 /* For storing information about tokens and quotes */
 typedef struct s_token
 {
-    char			*value;
-    t_token_type	type;
-    struct s_token	*next;
+	char			*value;
+	t_token_type	type;
+	struct s_token	*next;
 }	t_token;
 
 /* For storing the environment variables line by line as a node */
@@ -67,52 +67,48 @@ extern t_data	*g_data;
 
 void	ft_env_clear(t_env **env);
 
+/* signal */
 void	sig_init(void);
 void	sig_default(void);
 void	sig_ignore(void);
 void	sig_heredoc(void);
-
 void	sig_quit(int sig);
 void	sig_interrupt(int sig);
-
+/* token & lexer */
 int 	ft_isoperator(char c);
 int		ft_add_char(char **word, char c);
 t_token	*ft_token_new(char *value, t_token_type type);
 void	ft_token_add_back(t_token **tokens, t_token *new_token);
 void	ft_token_clear(t_token **tokens);
-
 int	    ft_isredirection(t_token_type type);
 int		ft_add_token(t_token **tokens, char *value, t_token_type type);
 int		ft_quote_word(char *line, int *index, char **word);
 int		ft_read_word(char *line, int *index, char **word, int *started);
 int		ft_lex_word(char *line, int *index, t_token **tokens);
-
 char	*set_pipe_token(char *line, int *index, t_token_type *type);
 char	*set_heredoc_token(char *line, int *index, t_token_type *type);
 char	*set_append_token(char *line, int *index, t_token_type *type);
 char	*set_redir_in_token(char *line, int *index, t_token_type *type);
 char	*set_redir_out_token(char *line, int *index, t_token_type *type);
-
 void	ft_print_tokens(t_token *tokens);
 int		lexer(char *line, t_token **tokens);
-
 int		ft_validate_syntax(t_token *tokens);
-
-int	is_var_start(char c);
-int	is_var_char(char c);
-int	is_var_name_char(char c);
+/* expand */
+int		is_var_start(char c);
+int		is_var_char(char c);
+int		is_var_name_char(char c);
 char	*append_text(char *result, const char *text);
 char	*append_char(char *result, char c);
-int	expand_status_var(t_data *data, char **result, size_t *i);
-int	expand_env_var(t_data *data, const char *word, size_t *i, char **result);
-int	handle_dollar(t_data *data, const char *word, size_t *i, char **result);
-int	handle_single_quote(int *in_single, size_t *i);
-int	handle_double_quote(int *in_double, size_t *i);
-int	append_literal_char(char **result, const char *word, size_t *i);
-int	process_char(t_exp_state *state);
-
-char	*env_get(t_env *env, const char *name);
+int		expand_status_var(t_data *data, char **result, size_t *i);
+int		expand_env_var(t_data *data, const char *word, size_t *i, char **result);
+int		handle_dollar(t_data *data, const char *word, size_t *i, char **result);
+int		handle_single_quote(int *in_single, size_t *i);
+int		handle_double_quote(int *in_double, size_t *i);
+int		append_literal_char(char **result, const char *word, size_t *i);
+int		process_char(t_exp_state *state);
 char	*expand_word(t_data *data, const char *word);
 int		expand_tokens(t_data *data, t_token *tokens);
+
+char	*env_get(t_env *env, const char *name);
 
 #endif
