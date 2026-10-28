@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 01:21:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 14:45:57 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,22 @@
 
 t_data	*g_data;
 
+static void	free_shell(void)
+{
+	rl_clear_history();
+	if (g_data)
+	{
+		ft_env_clear(&g_data->env);
+		free(g_data);
+		g_data = NULL;
+	}
+}
+
 int	update_shlvl(t_env *env, int shlvl)
 {
 	char	*level;
 	char	*new_value;
+	char	*old_value;
 
 	level = ft_itoa(shlvl);
 	if (!level)
@@ -26,8 +38,9 @@ int	update_shlvl(t_env *env, int shlvl)
 	free(level);
 	if (!new_value)
 		return (0);
-	free(env->value);
+	old_value = env->value;
 	env->value = new_value;
+	free(old_value);
 	return (1);
 }
 
@@ -163,6 +176,7 @@ int main(int ac, char **av, char **env)
         if (!line)
 		{
 			ft_putstr_fd("exit\n", STDERR);
+			free_shell();
 			return (SUCCESS);
 		}
         if (line[0] == '\0')
@@ -172,10 +186,11 @@ int main(int ac, char **av, char **env)
         }
         if (lexer(line, &g_data->tokens) == 0)
         {
-			// ft_print_tokens(g_data->tokens);
+			
         	g_data->status = ft_validate_syntax(g_data->tokens);
         	if (g_data->status == SUCCESS)
 			{
+				// ft_print_tokens(g_data->tokens);
 				if (expand_tokens(g_data, g_data->tokens) == -1)
 					g_data->status = ERROR;
 				else
@@ -187,7 +202,6 @@ int main(int ac, char **av, char **env)
         ft_token_clear(&g_data->tokens);
         free(line);
     }
-	ft_env_clear(&g_data->env);
-	free(g_data);
+	free_shell();
 	return (SUCCESS);
 }
