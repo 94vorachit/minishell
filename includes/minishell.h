@@ -81,10 +81,17 @@ t_token	*ft_token_new(char *value, t_token_type type);
 void	ft_token_add_back(t_token **tokens, t_token *new_token);
 void	ft_token_clear(t_token **tokens);
 
+int	    ft_isredirection(t_token_type type);
 int		ft_add_token(t_token **tokens, char *value, t_token_type type);
 int		ft_quote_word(char *line, int *index, char **word);
 int		ft_read_word(char *line, int *index, char **word, int *started);
 int		ft_lex_word(char *line, int *index, t_token **tokens);
+
+char	*set_pipe_token(char *line, int *index, t_token_type *type);
+char	*set_heredoc_token(char *line, int *index, t_token_type *type);
+char	*set_append_token(char *line, int *index, t_token_type *type);
+char	*set_redir_in_token(char *line, int *index, t_token_type *type);
+char	*set_redir_out_token(char *line, int *index, t_token_type *type);
 
 void	ft_print_tokens(t_token *tokens);
 int		lexer(char *line, t_token **tokens);

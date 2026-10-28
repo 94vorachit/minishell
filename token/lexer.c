@@ -6,18 +6,24 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:24:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 17:20:48 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/28 17:49:18 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
-int	ft_isredirection(t_token_type type)
-{
-	return (type == T_REDIR_IN || type == T_REDIR_OUT
-		|| type == T_APPEND || type == T_HEREDOC);
-}
-
+/**
+ * Prints the whole token list.
+ * 
+ * It loops through the linked list and prints:
+ * * token value
+ * * token type
+ * 
+ * Example output:
+ * * value = [|], type = 0
+ * 
+ * This is useful for debugging the lexer.
+ */
 void	ft_print_tokens(t_token *tokens)
 {
 	while (tokens)
@@ -28,6 +34,23 @@ void	ft_print_tokens(t_token *tokens)
 	}
 }
 
+/**
+ * Detects and creates the value string for operators.
+ * 
+ * It checks in order:
+ * * pipe |
+ * * heredoc <<
+ * * append >>
+ * * input redirect <
+ * * output redirect >
+ * It uses helper functions to decide which operator matches 
+ * the current character.
+ * 
+ * Important behavior:
+ * * << and >> consume two characters
+ * * the index is advanced in the helper functions
+ * * it returns the string for the operator, such as |, <, >>, etc.
+ */
 char	*ft_operator_value(char *line, int *index, t_token_type *type)
 {
 	char	*value;
