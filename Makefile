@@ -4,7 +4,9 @@ CFLAGS = -Wall -Wextra -Werror
 
 SRC = $(wildcard src/*.c) \
 	$(wildcard signal/*.c) \
-	$(wildcard token/*.c)
+	$(wildcard token/*.c) \
+	$(wildcard expand/*.c)
+	
 OBJ = $(SRC:.c=.o)
 LDLIBS = -lreadline
 
