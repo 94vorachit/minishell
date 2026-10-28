@@ -1,0 +1,442 @@
+Read , lines 1 to 120
+Completed with input: {
+  "path": "/home/acer/42_code/myGit/minishell/exec/exec_path.c",
+  "view_range": [
+    1,
+    120
+  ]
+}
+
+Read , lines 55 to 135
+Completed with input: {
+  "path": "/home/acer/42_code/myGit/minishell/includes/minishell.h",
+  "view_range": [
+    55,
+    135
+  ]
+}
+
+`exec_path.c` contains the functions that locate an executable command using the shell’s `PATH` environment variable.
+
+The overall flow is:
+
+```text
+find_executable_path()
+        |
+        |-- command contains '/'?
+        |       └── return command directly
+        |
+        |-- get PATH
+        |
+        |-- split PATH into directories
+        |
+        |-- search_in_paths()
+        |       └── check_executable_in_dir() for each directory
+        |
+        └── free split PATH and return result
+```
+
+## 1. `check_executable_in_dir`
+
+```c
+char	*check_executable_in_dir(const char *dir, const char *cmd)
+```
+
+Checks whether a command exists and is executable inside one directory.
+
+For example:
+
+```c
+dir = "/usr/bin";
+cmd = "ls";
+```
+
+It builds:
+
+```text
+/usr/bin/ + ls
+```
+
+which produces:
+
+```text
+/usr/bin/ls
+```
+
+### Step 1: Add `/` to the directory
+
+```c
+full_path = ft_strjoin(dir, "/");
+```
+
+This creates:
+
+```text
+"/usr/bin/"
+```
+
+If allocation fails, it returns `NULL`.
+
+### Step 2: Add the command name
+
+```c
+full_cmd = ft_strjoin(full_path, cmd);
+```
+
+This creates:
+
+```text
+"/usr/bin/ls"
+```
+
+After creating `full_cmd`, the temporary `full_path` is no longer needed:
+
+```c
+free(full_path);
+```
+
+### Step 3: Check execute permission
+
+```c
+if (access(full_cmd, X_OK) == 0)
+	return (full_cmd);
+```
+
+`access()` checks whether the current process can execute the file.
+
+The `X_OK` flag means:
+
+```text
+Does this path exist and have execute permission?
+```
+
+If the check succeeds, the function returns the allocated path:
+
+```text
+"/usr/bin/ls"
+```
+
+The caller becomes responsible for freeing it.
+
+### Step 4: Free invalid candidates
+
+If the file does not exist or is not executable:
+
+```c
+free(full_cmd);
+return (NULL);
+```
+
+This is important because the function may be called many times while searching through `PATH`.
+
+---
+
+## 2. `search_in_paths`
+
+```c
+char	*search_in_paths(char **paths, const char *cmd)
+```
+
+Searches for a command in all directories from `PATH`.
+
+For example, after splitting:
+
+```bash
+PATH=/usr/local/bin:/usr/bin:/bin
+```
+
+the array is:
+
+```text
+paths[0] = "/usr/local/bin"
+paths[1] = "/usr/bin"
+paths[2] = "/bin"
+paths[3] = NULL
+```
+
+The function loops over every directory:
+
+```c
+i = 0;
+while (paths[i])
+{
+	result = check_executable_in_dir(paths[i], cmd);
+	if (result)
+		return (result);
+	i++;
+}
+```
+
+For the command `ls`, it checks:
+
+```text
+/usr/local/bin/ls
+/usr/bin/ls
+/bin/ls
+```
+
+It stops at the first executable path found.
+
+If no directory contains an executable command, it returns:
+
+```c
+NULL
+```
+
+The returned path is dynamically allocated when successful, so the caller must free it.
+
+---
+
+## 3. `find_executable_path`
+
+```c
+char	*find_executable_path(t_env *env, const char *cmd)
+```
+
+This is the main public function in the file. It receives:
+
+- `env`: the shell environment linked list
+- `cmd`: the command name, such as `"ls"` or `"cat"`
+
+It returns:
+
+- A dynamically allocated executable path on success
+- `NULL` if the command cannot be found
+
+### Step 1: Validate the command
+
+```c
+if (!cmd || cmd[0] == '\0')
+	return (NULL);
+```
+
+This rejects:
+
+```c
+NULL
+```
+
+and:
+
+```c
+""
+```
+
+There is no executable path to search for in either case.
+
+### Step 2: Handle commands containing `/`
+
+```c
+if (ft_strchr(cmd, '/'))
+	return (ft_strdup(cmd));
+```
+
+If the command contains a slash, it is treated as an explicit path.
+
+Examples:
+
+```bash
+/bin/ls
+./minishell
+../program
+```
+
+The function does not search `PATH` for these commands. It simply duplicates and returns the provided path.
+
+For example:
+
+```c
+cmd = "/bin/ls";
+return ft_strdup("/bin/ls");
+```
+
+The caller still needs to use `free()` on the returned string.
+
+### Step 3: Get `PATH`
+
+```c
+path_env = env_get(env, "PATH");
+```
+
+`env_get()` searches the linked-list environment for an entry like:
+
+```text
+PATH=/usr/local/bin:/usr/bin:/bin
+```
+
+It returns only the value after `PATH=`:
+
+```text
+/usr/local/bin:/usr/bin:/bin
+```
+
+If `PATH` does not exist or is empty:
+
+```c
+if (!path_env || !path_env[0])
+	return (NULL);
+```
+
+the function cannot search for a command, so it returns `NULL`.
+
+### Step 4: Split `PATH`
+
+```c
+paths = ft_split(path_env, ':');
+```
+
+This converts:
+
+```text
+/usr/local/bin:/usr/bin:/bin
+```
+
+into:
+
+```text
+paths[0] = "/usr/local/bin"
+paths[1] = "/usr/bin"
+paths[2] = "/bin"
+paths[3] = NULL
+```
+
+If allocation fails, it returns `NULL`.
+
+### Step 5: Search all directories
+
+```c
+result = search_in_paths(paths, cmd);
+```
+
+This checks each directory until it finds an executable file.
+
+### Step 6: Free the split array
+
+```c
+ft_free_split(paths);
+```
+
+The `paths` array is no longer needed after searching, so it is freed regardless of whether a command was found.
+
+This does not free `result`, because `result` is the path that must be returned to the caller.
+
+### Step 7: Return the result
+
+```c
+return (result);
+```
+
+The caller receives either:
+
+```text
+"/usr/bin/ls"
+```
+
+or:
+
+```c
+NULL
+```
+
+---
+
+## Example: `ls`
+
+Suppose the environment contains:
+
+```text
+PATH=/usr/local/bin:/usr/bin:/bin
+```
+
+and the command is:
+
+```text
+ls
+```
+
+The flow is:
+
+```text
+find_executable_path(env, "ls")
+        |
+        |-- "ls" contains '/'? No
+        |
+        |-- get PATH
+        |
+        |-- split PATH
+        |
+        |-- check /usr/local/bin/ls
+        |-- check /usr/bin/ls
+        |-- found
+        |
+        |-- free paths array
+        |
+        └── return "/usr/bin/ls"
+```
+
+Then the executor can call:
+
+```c
+execve(exec_path, cmd->argv, envp);
+```
+
+---
+
+## Example: explicit path
+
+For:
+
+```bash
+./minishell
+```
+
+the command contains `/`, so the function does not inspect `PATH`:
+
+```text
+find_executable_path(env, "./minishell")
+        |
+        |-- command contains '/'? Yes
+        |
+        └── return strdup("./minishell")
+```
+
+The actual existence and execution check will happen later when `execve()` is called.
+
+## Memory ownership
+
+The returned path is dynamically allocated:
+
+```c
+exec_path = find_executable_path(env, cmd->argv[0]);
+```
+
+Therefore, the caller must free it:
+
+```c
+free(exec_path);
+```
+
+The temporary `paths` array is freed inside `find_executable_path()`:
+
+```c
+ft_free_split(paths);
+```
+
+The ownership is therefore:
+
+```text
+check_executable_in_dir()
+    returns allocated executable path
+            |
+            v
+search_in_paths()
+    returns same path
+            |
+            v
+find_executable_path()
+    returns same path
+            |
+            v
+execute_simple_cmd()
+    frees exec_path
+```
