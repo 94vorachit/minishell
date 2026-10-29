@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 17:14:07 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:36:59 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 16:00:25 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ char	*set_pipe_token(char *line, int *index, t_token_type *type)
 {
 	if (line[*index] == '|')
 	{
-		*type = T_REDIR_IN;
+		*type = T_PIPE;
 		return (ft_strdup("|"));
 	}
 	return (NULL);
