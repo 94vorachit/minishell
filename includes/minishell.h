@@ -17,7 +17,7 @@
 
 # define SUCCESS 0
 # define ERROR 1
-# define SYNTAX_ERROR 258
+# define SYNTAX_ERROR 2
 # define UNKNOWN_COMMAND 127
 
 typedef enum e_token_type
