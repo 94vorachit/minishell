@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 15:59:26 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 16:53:47 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,56 +68,6 @@ void	ft_shlvl(t_env *env)
 			return ;
 		env = env->next;
 	}
-}
-
-char	*env_get(t_env *env, const char *name)
-{
-    size_t	name_len;
-
-    if (!name || name[0] == '\0')
-        return (NULL);
-    name_len = ft_strlen(name);
-    while (env)
-    {
-        if (ft_strncmp(env->value, name, name_len) == 0
-            && env->value[name_len] == '=')
-            return (env->value + name_len + 1);
-        env = env->next;
-    }
-    return (NULL);
-}
-
-void	ft_env_clear(t_env **env)
-{
-    t_env	*current;
-    t_env	*next;
-
-    current = *env;
-    while (current)
-    {
-        next = current->next;
-        free(current->value);
-        free(current);
-        current = next;
-    }
-    *env = NULL;
-}
-
-t_env	*ft_env_new(char *value)
-{
-	t_env	*new;
-
-	new = malloc(sizeof(*new));
-	if (!new)
-		return (NULL);
-	new->value = ft_strdup(value);
-	if (!new->value)
-	{
-		free(new);
-		return (NULL);
-	}
-	new->next = NULL;
-	return (new);
 }
 
 int	ft_init_env(t_env **mini_env, char **env)
