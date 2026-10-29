@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 19:42:57 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 15:59:26 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ int	ft_init_env(t_env **mini_env, char **env)
 int	init(t_data *mini, char **env)
 {
 	mini->status = 0; //This sets the shell's initial exit status to success.
-	mini->cmd_count = 0; //No commands have been parsed yet.
+	// mini->cmd_count = 0; //No commands have been parsed yet.
 	mini->tokens = NULL;
 	if (ft_init_env(&mini->env, env) == -1)
 		return (-1);

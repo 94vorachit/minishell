@@ -60,7 +60,7 @@ typedef struct s_data
 	t_env	*env;
 	t_cmd	*commands;
 	// pid_t	*fam;
-	int	cmd_count;
+	// int	cmd_count;
 	int	status;
 }	t_data;
 
@@ -85,6 +85,7 @@ void	sig_ignore(void);
 void	sig_heredoc(void);
 void	sig_quit(int sig);
 void	sig_interrupt(int sig);
+
 /* token & lexer */
 int 	ft_isoperator(char c);
 int		ft_add_char(char **word, char c);
@@ -104,6 +105,7 @@ char	*set_redir_out_token(char *line, int *index, t_token_type *type);
 void	ft_print_tokens(t_token *tokens);
 int		lexer(char *line, t_token **tokens);
 int		ft_validate_syntax(t_token *tokens);
+
 /* expand */
 int		is_var_start(char c);
 int		is_var_char(char c);
@@ -128,6 +130,8 @@ void	ft_free_cmd(t_cmd *cmd);
 int		ft_count_env(t_env *env);
 int		ft_copy_env(char **arr, t_env *env);
 char	*find_executable_path(t_env *env, const char *cmd);
+int		redirect_input(t_cmd *cmd);
+int		redirect_output(t_cmd *cmd);
 int		parse_redirections(t_token *tokens, t_cmd *cmd);
 int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
 int		execute_simple_cmd(t_data *data, t_cmd *cmd);
