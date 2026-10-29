@@ -6,12 +6,22 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 03:29:40 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 13:25:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Counts how many `T_WORD` tokens appear before a pipe.
+ * 
+ * Needed to allocate the correct size for `cmd->argv`.
+ * 
+ * Behavior:
+ * * Walks the token list until `T_PIPE`
+ * * Increments `argc` for every word
+ * * If the current token is a redirection, skips its operand token too
+ */
 int	count_args(t_token *tokens)
 {
 	t_token	*cur;
@@ -30,6 +40,15 @@ int	count_args(t_token *tokens)
 	return (argc);
 }
 
+/**
+ * Fills cmd->argv with the actual command arguments.
+ * 
+ * Behavior:
+ * * Iterates tokens again
+ * * For each T_WORD, duplicates the token value into cmd->argv[i]
+ * * Adds a final NULL at the end
+ * * If a redirection is found, skips the next token because that token is file name, not command arg
+ */
 int	fill_argv(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
@@ -53,6 +72,18 @@ int	fill_argv(t_token *tokens, t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Builds one command structure from the token list.
+ * 
+ * Flow:
+ * 1. Zero-initialize `cmd`
+ * 2. Call `parse_redirections(tokens, cmd)` to store redirection files
+ * 3. Count args with `count_args`
+ * 4. Allocate `argv`
+ * 5. Fill `argv` with `fill_argv`
+ * 
+ * This is the main parser for a single command.
+ */
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 {
 	int	argc;
@@ -81,6 +112,20 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Prepares everything before `fork()`.
+ * 
+ * 1. Finds the executable path with `find_executable_path(...)`
+ * 2. Prints:
+ * `minishell: command not found: <name>` 
+ * when no executable is found
+ * 3. Saves exit status as `127`
+ * 4. Builds environment array with `env_to_char_array(...)`
+ * 
+ * Returns:
+ * * `0` on success
+ * * `-1` on error
+ */
 int	prepare_execution(t_data *data, t_cmd *cmd,
 				char **exec_path, char ***envp)
 {
@@ -103,6 +148,15 @@ int	prepare_execution(t_data *data, t_cmd *cmd,
 	return (0);
 }
 
+/**
+ * Replaces stdin with the file from `cmd->infile`.
+ * 
+ * Behavior:
+ * 1. Opens the file with `open(..., O_RDONLY)`
+ * 2. If fail: prints `perror(...)`
+ * 3. Uses `dup2(fd, STDIN_FILENO)`
+ * 4. Closes the file descriptor
+ */
 int	redirect_input(t_cmd *cmd)
 {
 	int	fd;
@@ -118,6 +172,17 @@ int	redirect_input(t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Replaces stdout with the output file.
+ * 
+ * Behavior:
+ * 1. Opens the file with:
+ * * O_WRONLY | O_CREAT
+ * * O_TRUNC for >
+ * * O_APPEND for >>
+ * 2. Uses dup2(fd, STDOUT_FILENO)
+ * 3. Closes the file
+ */
 int	redirect_output(t_cmd *cmd)
 {
 	int	fd;
@@ -134,6 +199,18 @@ int	redirect_output(t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Runs the actual command in the child process.
+ * 
+ * Behavior:
+ * 1. If cmd->infile exists, call redirect_input
+ * 2. If cmd->outfile exists, call redirect_output
+ * 3. Then run:
+ * execve(exec_path, cmd->argv, envp)
+ * 4. If execve fails, print perror("execve") and exit with 127
+ * 
+ * This is where the process actually becomes the target command.
+ */
 void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 {
 	if (cmd->infile && redirect_input(cmd) == -1)
