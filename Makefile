@@ -6,7 +6,8 @@ SRC = $(wildcard src/*.c) \
 	$(wildcard signal/*.c) \
 	$(wildcard token/*.c) \
 	$(wildcard expand/*.c) \
-	$(wildcard exec/*.c)
+	$(wildcard exec/*.c) \
+	$(wildcard builtin/*.c)
 	
 OBJ = $(SRC:.c=.o)
 LDLIBS = -lreadline
@@ -14,19 +15,19 @@ LDLIBS = -lreadline
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(MAKE) -C libft
-	$(CC) $(CFLAGS) $(OBJ) $(LDLIBS) libft/libft.a -o $(NAME)
+	@$(MAKE) -C libft
+	@$(CC) $(CFLAGS) $(OBJ) $(LDLIBS) libft/libft.a -o $(NAME)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(MAKE) clean -C ./libft/
-	rm -f $(OBJ)
+	@$(MAKE) clean -C ./libft/
+	@rm -f $(OBJ)
 
 fclean: clean
-	$(MAKE) fclean -C ./libft/
-	rm -f $(NAME)
+	@$(MAKE) fclean -C ./libft/
+	@rm -f $(NAME)
 
 re: fclean all
 
