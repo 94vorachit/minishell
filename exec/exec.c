@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 15:44:12 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 17:56:36 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,8 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 
 	if (!data || !cmd || !cmd->argv || !cmd->argv[0])
 		return (SUCCESS);
+	if (is_builtin(cmd->argv[0]))
+		return (execute_builtin(data, cmd));
 	if (prepare_execution(data, cmd, &exec_path, &envp) == -1)
 		return (data->status);
 	return (run_process(data, cmd, exec_path, envp));

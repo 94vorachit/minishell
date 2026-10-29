@@ -76,6 +76,8 @@ typedef struct s_exp_state
 
 extern t_data	*g_data;
 
+void	free_shell(void);
+t_env	*ft_env_new(char *value);
 void	ft_env_clear(t_env **env);
 
 /* signal */
@@ -135,5 +137,21 @@ int		redirect_output(t_cmd *cmd);
 int		parse_redirections(t_token *tokens, t_cmd *cmd);
 int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
 int		execute_simple_cmd(t_data *data, t_cmd *cmd);
+
+t_env	*env_find(t_env *env, char *name);
+int		env_set(t_env **env, char *name, char *value);
+void	env_unset(t_env **env, char *name);
+int		env_count(t_env *env);
+
+int		is_builtin(char *cmd);
+int		execute_builtin(t_data *data, t_cmd *cmd);
+
+int		builtin_echo(t_data *data, t_cmd *cmd);
+int		builtin_cd(t_data *data, t_cmd *cmd);
+int		builtin_pwd(t_data *data, t_cmd *cmd);
+int		builtin_export(t_data *data, t_cmd *cmd);
+int		builtin_unset(t_data *data, t_cmd *cmd);
+int		builtin_env(t_data *data, t_cmd *cmd);
+int		builtin_exit(t_data *data, t_cmd *cmd);
 
 #endif
