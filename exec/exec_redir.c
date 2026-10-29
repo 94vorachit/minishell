@@ -6,18 +6,37 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 02:19:17 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/29 16:04:55 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Saves the input filename into `cmd->infile`
+ * Frees the old value first so there is no memory leak
+ * Used when the token is `<`
+ * 
+ * Example:
+ * input: `cat < file.txt`
+ * result: `cmd->infile = "file.txt"`
+ */
 void	set_input_file(t_cmd *cmd, char *value)
 {
 	free(cmd->infile);
 	cmd->infile = value;
 }
 
+/**
+ * Saves the output filename into cmd->outfile
+ * Stores whether it is append mode in cmd->append
+ * `append == 0` means `>`
+ * `append == 1` means `>>`
+ * 
+ * Example:
+ * `echo hi > out.txt` → `cmd->outfile = "out.txt", cmd->append = 0`
+ * `echo hi >> out.txt` → `cmd->outfile = "out.txt", cmd->append = 1`
+ */
 void	set_output_file(t_cmd *cmd, char *value, int append)
 {
 	free(cmd->outfile);
@@ -25,6 +44,17 @@ void	set_output_file(t_cmd *cmd, char *value, int append)
 	cmd->append = append;
 }
 
+/**
+ * Decides which field of t_cmd should receive the redirection
+ * 
+ * Handles:
+ * `T_REDIR_IN` → input file
+ * `T_REDIR_OUT` → output file with truncate
+ * `T_APPEND` → output file with append
+ * 
+ * If some unexpected type appears, it frees the duplicated string safely
+ * This function is a dispatcher.
+ */
 void	assign_redirection(t_cmd *cmd, t_token_type type, char *value)
 {
 	if (type == T_REDIR_IN)
@@ -37,6 +67,23 @@ void	assign_redirection(t_cmd *cmd, t_token_type type, char *value)
 		free(value);
 }
 
+/**
+ * This is the logic that converts a token like:
+ * * < file
+ * * > file
+ * * >> file
+ * into the shell command structure.
+ * 
+ * What it does:
+ * 1. checks that the redirection has a filename after it
+ * 2. rejects invalid syntax like >, >>, or < without a following word
+ * 3. ignores heredoc here (T_HEREDOC) by returning 0
+ * 4. duplicates the filename
+ * 5. stores it in the command structure with assign_redirection
+ * 
+ * If something fails:
+ * * returns -1
+ */
 int	set_redirection(t_cmd *cmd, t_token *token)
 {
 	char	*value;
@@ -52,6 +99,16 @@ int	set_redirection(t_cmd *cmd, t_token *token)
 	return (0);
 }
 
+/**
+ * This is the main parser for redirections in a single command.
+ * 
+ * How it works:
+ * * walks through the token list
+ * * when it sees a redirection token (<, >, >>, ...), it calls set_redirection
+ * * if parsing fails, it returns -1
+ * * if redirection is found, it skips the filename token because the filename 
+ * is not part of the command arguments
+ */
 int	parse_redirections(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
