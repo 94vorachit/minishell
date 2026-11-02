@@ -6,28 +6,28 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 20:08:34 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/10/30 17:40:38 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
-static int	is_numeric_exit_arg(char *arg)
+int	is_numeric_exit_arg(char *arg)
 {
-	int	idx;
+	int	i;
 
 	if (!arg || !*arg)
 		return (0);
-	idx = 0;
-	if (arg[idx] == '+' || arg[idx] == '-')
-		idx++;
-	if (!arg[idx])
+	i = 0;
+	if (arg[i] == '+' || arg[i] == '-')
+		i++;
+	if (!arg[i])
 		return (0);
-	while (arg[idx])
+	while (arg[i])
 	{
-		if (!ft_isdigit((unsigned char)arg[idx]))
+		if (!ft_isdigit((unsigned char)arg[i]))
 			return (0);
-		idx++;
+		i++;
 	}
 	return (1);
 }
@@ -35,11 +35,15 @@ static int	is_numeric_exit_arg(char *arg)
 int	builtin_exit(t_data *data, t_cmd *cmd)
 {
 	int	code;
+	int	status;
 
+	if (!data || !cmd || !cmd->argv || !cmd->argv[0])
+		return (1);
 	if (!cmd->argv[1])
 	{
+		status = data->status;
 		free_shell();
-		exit(data->status);
+		exit(status);
 	}
 	if (cmd->argv[2])
 	{
@@ -58,6 +62,9 @@ int	builtin_exit(t_data *data, t_cmd *cmd)
 	code = ft_atoi(cmd->argv[1]);
 	if (code < 0)
 		code = 256 + code;
+	ft_putstr_fd("The terminal process \"usr/bin\" terminated with exit code: ", STDERR);
+	ft_putnbr_fd(code, STDERR);
+	ft_putstr_fd("\n", STDERR);
 	free_shell();
 	exit(code % 256);
 }
