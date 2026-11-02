@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 20:00:22 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 18:19:43 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,10 +155,115 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 		return (SUCCESS);
 	if (is_builtin(cmd->argv[0]))
 	{
+		int	in_fd;
+		int	out_fd;
+
+		in_fd = dup(STDIN_FILENO);
+		out_fd = dup(STDOUT_FILENO);
+		if (cmd->infile && redirect_input(cmd) == -1)
+			return (ERROR);
+		if (cmd->outfile && redirect_output(cmd) == -1)
+			return (ERROR);
 		data->status = execute_builtin(data, cmd);
+		dup2(in_fd, STDIN_FILENO);
+		dup2(out_fd, STDOUT_FILENO);
+		close(in_fd);
+		close(out_fd);
 		return (data->status);
 	}
-	if (prepare_execution(data, cmd, &exec_path, &envp) == -1)
-		return (data->status);
-	return (run_process(data, cmd, exec_path, envp));
+	exec_path = find_executable_path(data->env, cmd->argv[0]);
+	if (!exec_path)
+	{
+		ft_putstr_fd("minishell: command not found: ", STDERR);
+		ft_putstr_fd(cmd->argv[0], STDERR);
+		ft_putstr_fd("\n", STDERR);
+		data->status = 127;
+		return (127);
+	}
+	envp = env_to_char_array(data->env);
+	if (!envp)
+	{
+		free(exec_path);
+		data->status = 1;
+		return (1);
+	}
+	if (fork() == 0)
+	{
+		if (cmd->infile && redirect_input(cmd) == -1)
+			exit(1);
+		if (cmd->outfile && redirect_output(cmd) == -1)
+			exit(1);
+		execve(exec_path, cmd->argv, envp);
+		perror("execve");
+		exit(127);
+	}
+	waitpid(-1, NULL, 0);
+	free(exec_path);
+	ft_free_split(envp);
+	return (SUCCESS);
+}
+
+int	execute_pipeline(t_data *data, t_cmd *cmd)
+{
+	int		pipefd[2];
+	int		prev_fd;
+	pid_t	pid;
+	t_cmd	*cur;
+	int		status;
+
+	prev_fd = -1;
+	cur = cmd;
+	while (cur)
+	{
+		if (cur->next && pipe(pipefd) < 0)
+		{
+			perror("pipe");
+			return (ERROR);
+		}
+		pid = fork();
+		if (pid == 0)
+		{
+			if (prev_fd != -1)
+			{
+				dup2(prev_fd, STDIN_FILENO);
+				close(prev_fd);
+			}
+			if (cur->next)
+			{
+				dup2(pipefd[1], STDOUT_FILENO);
+				close(pipefd[0]);
+				close(pipefd[1]);
+			}
+			if (cur->infile && redirect_input(cur) == -1)
+				exit(1);
+			if (cur->outfile && redirect_output(cur) == -1)
+				exit(1);
+			if (is_builtin(cur->argv[0]))
+				exit(execute_builtin(data, cur));
+			else
+			{
+				char	*path;
+				char	**envp;
+
+				path = find_executable_path(data->env, cur->argv[0]);
+				envp = env_to_char_array(data->env);
+				if (!path || !envp)
+					exit(127);
+				execve(path, cur->argv, envp);
+				perror("execve");
+				exit(127);
+			}
+		}
+		if (prev_fd != -1)
+			close(prev_fd);
+		if (cur->next)
+		{
+			close(pipefd[1]);
+			prev_fd = pipefd[0];
+		}
+		waitpid(pid, &status, 0);
+		set_child_status(data, status);
+		cur = cur->next;
+	}
+	return (data->status);
 }
