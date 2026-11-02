@@ -6,12 +6,16 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:05 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 14:48:13 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 15:09:40 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Prints the standard shell-style error message for `cd` when a directory 
+ * is invalid.
+ */
 void	cd_error(char *arg)
 {
 	ft_putstr_fd("cd : no such file or directory : ", STDERR);
@@ -19,6 +23,14 @@ void	cd_error(char *arg)
 	ft_putstr_fd("\n", STDERR);
 }
 
+/**
+ * Updates shell environment variables after a successful `cd`.
+ * 
+ * What it does:
+ * 1. If there was a previous working directory, it stores it in `OLDPWD`
+ * 2. Otherwise it stores an empty string
+ * 3. Always stores the new working directory in `PWD`
+ */
 void	cd_set_pwd(t_data *data, char *oldpwd, char *cwd)
 {
 	if (oldpwd)
@@ -28,6 +40,17 @@ void	cd_set_pwd(t_data *data, char *oldpwd, char *cwd)
 	env_set(&data->env, "PWD", cwd);
 }
 
+/**
+ * Resolves the directory path to use for `cd`
+ * Handles validation for bad arguments
+ * 
+ * What it does:
+ * 1. If no argument is given, it uses `HOME`
+ * 2. Otherwise it uses the first argument
+ * 3. If the path is missing, it returns ERROR
+ * 4. If there are too many arguments (more than 1), it prints the error 
+ * and returns `ERROR`
+ */
 int	cd_get_path(t_data *data, t_cmd *cmd, char **path)
 {
 	if (!cmd || !cmd->argv)
@@ -46,6 +69,20 @@ int	cd_get_path(t_data *data, t_cmd *cmd, char **path)
 	return (SUCCESS);
 }
 
+/**
+ * Executes the actual directory change with `chdir()`
+ * 
+ * What it does:
+ * 1. Saves the current directory in `oldpwd`
+ * 2. Calls `chdir(path)`
+ * 3. If it fails:
+ * * prints the error
+ * * frees the saved old path
+ * * returns `ERROR`
+ * 4. If it succeeds, returns `SUCCESS`
+ * 
+ * This is the actual system call step.
+ */
 int	cd_change_dir(char *path, char **oldpwd)
 {
 	*oldpwd = getcwd(NULL, 0);
@@ -60,13 +97,18 @@ int	cd_change_dir(char *path, char **oldpwd)
 }
 
 /**
- * Behavior:
- * * cd with no arg → go to HOME
- * * cd PATH → chdir(PATH)
- * * update OLDPWD and PWD
+ * Main `cd` builtin entry point
  * 
- * OLDPWD and PWD are shell variables, so you should update your env list 
- * just like export.
+ * Flow:
+ * 1. Resolve the target path with `cd_get_path()`
+ * 2. Attempt the actual directory change with `cd_change_dir()`
+ * 3. Get the new current directory with `getcwd()`
+ * 4. Update `OLDPWD` and `PWD`
+ * 5. Free memory and return success
+ * 
+ * Return behavior:
+ * * `SUCCESS = 0` on proper `cd`
+ * * `ERROR = 1` on invalid path or bad arguments
  */
 int	builtin_cd(t_data *data, t_cmd *cmd)
 {
