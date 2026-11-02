@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 15:45:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 18:19:43 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,12 +64,13 @@ int	fill_argv(t_token *tokens, t_cmd *cmd)
 			cmd->argv[i] = ft_strdup(cur->value);
 			if (!cmd->argv[i])
 				return (-1);
-			cmd->argv[++i] = NULL;
+			i++;
 		}
-		if (ft_isredirection(cur->type))
+		if (ft_isredirection(cur->type) && cur->next)
 			cur = cur->next;
 		cur = cur->next;
 	}
+	cmd->argv[i] = NULL;
 	return (0);
 }
 
@@ -92,7 +93,12 @@ int	redirect_input(t_cmd *cmd)
 		perror(cmd->infile);
 		return (-1);
 	}
-	dup2(fd, STDIN_FILENO);
+	if (dup2(fd, STDIN_FILENO) < 0)
+	{
+		perror("dup2");
+		close(fd);
+		return (-1);
+	}
 	close(fd);
 	return (0);
 }
@@ -124,7 +130,12 @@ int	redirect_output(t_cmd *cmd)
 		perror(cmd->outfile);
 		return (-1);
 	}
-	dup2(fd, STDOUT_FILENO);
+	if (dup2(fd, STDOUT_FILENO) < 0)
+	{
+		perror("dup2");
+		close(fd);
+		return (-1);
+	}
 	close(fd);
 	return (0);
 }
@@ -145,25 +156,21 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 {
 	int	argc;
 
-	if (!cmd)
-		return (-1);
-	ft_bzero(cmd, sizeof(*cmd));
-	if (parse_redirections(tokens, cmd) == -1)
-	{
-		ft_free_cmd(cmd);
-		return (-1);
-	}
+	cmd->infile = NULL;
+	cmd->outfile = NULL;
+	cmd->append = 0;
 	argc = count_args(tokens);
 	cmd->argv = malloc(sizeof(char *) * (argc + 1));
 	if (!cmd->argv)
-	{
-		ft_free_cmd(cmd);
 		return (-1);
-	}
-	cmd->argv[0] = NULL;
 	if (fill_argv(tokens, cmd) == -1)
 	{
-		ft_free_cmd(cmd);
+		ft_free_split(cmd->argv);
+		return (-1);
+	}
+	if (parse_redirections(tokens, cmd) == -1)
+	{
+		ft_free_split(cmd->argv);
 		return (-1);
 	}
 	return (0);
