@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 20:00:22 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 17:21:38 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ void	free_shell(void)
 	{
 		ft_token_clear(&g_data->tokens);
 		ft_env_clear(&g_data->env);
+		ft_env_clear(&g_data->export);
 		free(g_data);
 		g_data = NULL;
 	}
@@ -101,6 +102,7 @@ int	init(t_data *mini, char **env)
 	mini->status = 0; //This sets the shell's initial exit status to success.
 	// mini->cmd_count = 0; //No commands have been parsed yet.
 	mini->tokens = NULL;
+	mini->export = NULL;
 	if (ft_init_env(&mini->env, env) == -1)
 		return (-1);
 	ft_shlvl(mini->env);
@@ -124,7 +126,8 @@ int main(int ac, char **av, char **env)
         return (ERROR);
     if (init(g_data, env) == -1)
 	{
-		ft_env_clear(&g_data->env);
+		ft_env_clear(&g_data->env);		
+		ft_env_clear(&g_data->export);		
 		free(g_data);
 		return (ERROR);
 	}
