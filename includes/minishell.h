@@ -57,7 +57,8 @@ typedef struct s_cmd
 typedef struct s_data
 {
 	t_token	*tokens;
-	t_env	*env;
+	t_env	*env;	
+	t_env	*export;	
 	t_cmd	*commands;
 	// pid_t	*fam;
 	// int	cmd_count;
@@ -142,6 +143,7 @@ t_env	*env_find(t_env *env, char *name);
 int		env_set(t_env **env, char *name, char *value);
 void	env_unset(t_env **env, char *name);
 int		env_count(t_env *env);
+char	**sort_env_alpha(t_env *env);
 
 int		is_builtin(char *cmd);
 int		execute_builtin(t_data *data, t_cmd *cmd);
