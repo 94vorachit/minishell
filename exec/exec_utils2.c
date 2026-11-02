@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 18:19:43 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 18:38:54 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -159,6 +159,7 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 	cmd->infile = NULL;
 	cmd->outfile = NULL;
 	cmd->append = 0;
+	cmd->next = NULL;
 	argc = count_args(tokens);
 	cmd->argv = malloc(sizeof(char *) * (argc + 1));
 	if (!cmd->argv)
@@ -173,5 +174,86 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 		ft_free_split(cmd->argv);
 		return (-1);
 	}
+	return (0);
+}
+
+static void	cmd_add_back(t_cmd **head, t_cmd *new_cmd)
+{
+	t_cmd	*cur;
+
+	if (!head || !new_cmd)
+		return ;
+	if (!*head)
+	{
+		*head = new_cmd;
+		return ;
+	}
+	cur = *head;
+	while (cur->next)
+		cur = cur->next;
+	cur->next = new_cmd;
+}
+
+int	ft_has_pipe(t_token *tokens)
+{
+	t_token	*cur;
+
+	cur = tokens;
+	while (cur)
+	{
+		if (cur->type == T_PIPE)
+			return (1);
+		cur = cur->next;
+	}
+	return (0);
+}
+
+int	build_pipeline_cmds(t_token *tokens, t_cmd **head)
+{
+	t_token	*cur;
+	t_token	*start;
+	t_cmd	*new_cmd;
+
+	if (!head || !tokens)
+		return (-1);
+	*head = NULL;
+	start = tokens;
+	cur = tokens;
+	while (cur)
+	{
+		if (cur->type == T_PIPE)
+		{
+			if (cur == start)
+				return (-1);
+			new_cmd = calloc(1, sizeof(*new_cmd));
+			if (!new_cmd)
+				return (-1);
+			if (build_simple_cmd(start, new_cmd) == -1)
+			{
+				free(new_cmd);
+				return (-1);
+			}
+			cmd_add_back(head, new_cmd);
+			start = cur->next;
+			cur = start;
+			continue ;
+		}
+		cur = cur->next;
+	}
+	if (!start)
+		return (0);
+	new_cmd = calloc(1, sizeof(*new_cmd));
+	if (!new_cmd)
+	{
+		ft_free_cmd_list(head);
+		return (-1);
+	}
+	if (build_simple_cmd(start, new_cmd) == -1)
+	{
+		free(new_cmd);
+		ft_free_cmd_list(head);
+		return (-1);
+	}
+	cmd_add_back(head, new_cmd);
 	return (0);
 }

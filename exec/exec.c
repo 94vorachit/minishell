@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 18:19:43 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 19:01:30 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,21 +207,35 @@ int	execute_pipeline(t_data *data, t_cmd *cmd)
 {
 	int		pipefd[2];
 	int		prev_fd;
-	pid_t	pid;
+	pid_t	*pids;
 	t_cmd	*cur;
 	int		status;
+	int		count;
+	int		i;
 
+	count = 0;
+	cur = cmd;
+	while (cur)
+	{
+		count++;
+		cur = cur->next;
+	}
+	pids = malloc(sizeof(pid_t) * count);
+	if (!pids)
+		return (ERROR);
 	prev_fd = -1;
 	cur = cmd;
+	i = 0;
 	while (cur)
 	{
 		if (cur->next && pipe(pipefd) < 0)
 		{
 			perror("pipe");
+			free(pids);
 			return (ERROR);
 		}
-		pid = fork();
-		if (pid == 0)
+		pids[i] = fork();
+		if (pids[i] == 0)
 		{
 			if (prev_fd != -1)
 			{
@@ -261,9 +275,14 @@ int	execute_pipeline(t_data *data, t_cmd *cmd)
 			close(pipefd[1]);
 			prev_fd = pipefd[0];
 		}
-		waitpid(pid, &status, 0);
-		set_child_status(data, status);
 		cur = cur->next;
+		i++;
 	}
+	for (i = 0; i < count; i++)
+	{
+		waitpid(pids[i], &status, 0);
+		set_child_status(data, status);
+	}
+	free(pids);
 	return (data->status);
 }

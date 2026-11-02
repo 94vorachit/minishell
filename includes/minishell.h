@@ -137,7 +137,11 @@ int		redirect_input(t_cmd *cmd);
 int		redirect_output(t_cmd *cmd);
 int		parse_redirections(t_token *tokens, t_cmd *cmd);
 int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
+int		build_pipeline_cmds(t_token *tokens, t_cmd **head);
+int		ft_has_pipe(t_token *tokens);
+void		ft_free_cmd_list(t_cmd **cmds);
 int		execute_simple_cmd(t_data *data, t_cmd *cmd);
+int		execute_pipeline(t_data *data, t_cmd *cmd);
 
 t_env	*env_find(t_env *env, char *name);
 int		env_set(t_env **env, char *name, char *value);

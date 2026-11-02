@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 17:21:38 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 18:38:54 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,11 +154,25 @@ int main(int ac, char **av, char **env)
                     g_data->status = ERROR;
                 else
                 {
-                    if (build_simple_cmd(g_data->tokens, &cmd) == 0)
-                        g_data->status = execute_simple_cmd(g_data, &cmd);
+                    if (ft_has_pipe(g_data->tokens))
+                    {
+                        t_cmd *cmds;
+
+                        cmds = NULL;
+                        if (build_pipeline_cmds(g_data->tokens, &cmds) == 0)
+                            g_data->status = execute_pipeline(g_data, cmds);
+                        else
+                            g_data->status = 2;
+                        ft_free_cmd_list(&cmds);
+                    }
                     else
-                        g_data->status = 2;
-                    ft_free_cmd(&cmd);
+                    {
+                        if (build_simple_cmd(g_data->tokens, &cmd) == 0)
+                            g_data->status = execute_simple_cmd(g_data, &cmd);
+                        else
+                            g_data->status = 2;
+                        ft_free_cmd(&cmd);
+                    }
                     add_history(line);
                 }
             }

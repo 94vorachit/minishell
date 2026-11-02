@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 01:46:38 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 02:52:10 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 18:38:54 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,24 @@ void	ft_free_cmd(t_cmd *cmd)
 	cmd->infile = NULL;
 	cmd->outfile = NULL;
 	cmd->append = 0;
+}
+
+void	ft_free_cmd_list(t_cmd **cmds)
+{
+	t_cmd	*cur;
+	t_cmd	*next;
+
+	if (!cmds)
+		return ;
+	cur = *cmds;
+	while (cur)
+	{
+		next = cur->next;
+		ft_free_cmd(cur);
+		free(cur);
+		cur = next;
+	}
+	*cmds = NULL;
 }
 
 /** 
