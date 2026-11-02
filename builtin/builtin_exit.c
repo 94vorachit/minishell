@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/30 17:40:38 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 14:54:42 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,23 @@ int	is_numeric_exit_arg(char *arg)
 	return (1);
 }
 
+int	exit_too_many_args(t_data *data)
+{
+	ft_putstr_fd("exit\n", STDERR);
+	ft_putstr_fd("minishell: exit: too many arguments\n", STDERR);
+	data->status = 1;
+	return (1);
+}
+
+int	exit_numeric_required(void)
+{
+	ft_putstr_fd("exit\n", STDERR);
+	ft_putstr_fd("minishell: exit: numeric argument required\n", STDERR);
+	free_shell();
+	exit(2);
+	return (0);
+}
+
 int	builtin_exit(t_data *data, t_cmd *cmd)
 {
 	int	code;
@@ -46,25 +63,17 @@ int	builtin_exit(t_data *data, t_cmd *cmd)
 		exit(status);
 	}
 	if (cmd->argv[2])
-	{
-		ft_putstr_fd("exit\n", STDERR);
-		ft_putstr_fd("minishell: exit: too many arguments\n", STDERR);
-		data->status = 1;
-		return (1);
-	}
+		return (exit_too_many_args(data));
 	if (!is_numeric_exit_arg(cmd->argv[1]))
-	{
-		ft_putstr_fd("exit\n", STDERR);
-		ft_putstr_fd("minishell: exit: numeric argument required\n", STDERR);
-		free_shell();
-		exit(2);
-	}
+		return (exit_numeric_required());
 	code = ft_atoi(cmd->argv[1]);
 	if (code < 0)
 		code = 256 + code;
-	ft_putstr_fd("The terminal process \"usr/bin\" terminated with exit code: ", STDERR);
+	ft_putstr_fd("The terminal process \"usr/bin\" terminated with exit code: ",
+		STDERR);
 	ft_putnbr_fd(code, STDERR);
 	ft_putstr_fd("\n", STDERR);
 	free_shell();
 	exit(code % 256);
+	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:50 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 20:28:49 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 14:53:20 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,38 @@ int	is_valid_export_name(char *name)
 	return (1);
 }
 
+int	export_invalid_name(char *name)
+{
+	if (!is_valid_export_name(name))
+	{
+		ft_putstr_fd("export: not a valid identifier\n", STDERR);
+		return (ERROR);
+	}
+	return (SUCCESS);
+}
+
+int	export_set_value(t_data *data, char *arg)
+{
+	char	*equal;
+	char	*name;
+	char	*value;
+
+	equal = ft_strchr(arg, '=');
+	if (!equal)
+		return (export_invalid_name(arg));
+	*equal = '\0';
+	name = arg;
+	if (export_invalid_name(name) == ERROR)
+	{
+		*equal = '=';
+		return (ERROR);
+	}
+	value = equal + 1;
+	env_set(&data->env, name, value);
+	*equal = '=';
+	return (SUCCESS);
+}
+
 /**
  * This one is a bit more involved.
  * 
@@ -41,32 +73,7 @@ int	is_valid_export_name(char *name)
 */
 int	builtin_export(t_data *data, t_cmd *cmd)
 {
-	char	*name;
-	char	*value;
-	char	*equal;
-
 	if (!cmd->argv[1])
 		return (builtin_env(data, cmd));
-	equal = ft_strchr(cmd->argv[1], '=');
-	if (!equal)
-	{
-		if (!is_valid_export_name(cmd->argv[1]))
-		{
-			ft_putstr_fd("export: not a valid identifier\n", STDERR);
-			return (ERROR);
-		}
-		return (SUCCESS);
-	}
-	*equal = '\0';
-	name = cmd->argv[1];
-	if (!is_valid_export_name(name))
-	{
-		*equal = '=';
-		ft_putstr_fd("export: not a valid identifier\n", STDERR);
-		return (ERROR);
-	}
-	value = equal + 1;
-	env_set(&data->env, name, value);
-	*equal = '=';
-	return (SUCCESS);
+	return (export_set_value(data, cmd->argv[1]));
 }
