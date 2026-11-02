@@ -1,0 +1,353 @@
+## Next step: implement redirections first, then pipes
+
+You are at the right milestone. The clean way is:
+
+1. finish simple redirections
+2. then add a pipeline loop
+3. leave heredoc until the very end
+
+---
+
+## 1) Redirection: do this first
+
+Your shell already has command fields like `infile`, `outfile`, `append`, and `next` in minishell.h, so use those as the target state.
+
+### Goal
+Turn tokens like:
+
+```bash
+echo hello > out.txt
+cat < in.txt
+echo hi >> out.txt
+```
+
+into one `t_cmd` with:
+
+- `cmd->outfile = "out.txt"`
+- `cmd->append = 1` for `>>`
+- `cmd->infile = "in.txt"`
+
+### Recommended flow
+- after tokenization, walk the token list
+- when you see `<`, `>`, `>>`, set the command’s file fields
+- skip the redirection operator and its file name from argv
+- then build `argv` as only the command and its arguments
+
+### Important rule
+For redirection:
+- open file in the child
+- duplicate it to `STDIN_FILENO` or `STDOUT_FILENO` with `dup2`
+- then `execve` or builtin execution
+
+This is the pattern you want:
+
+```c
+fd = open(file, flags, 0644);
+dup2(fd, STDOUT_FILENO);
+close(fd);
+```
+
+For input redirection:
+
+```c
+fd = open(file, O_RDONLY);
+dup2(fd, STDIN_FILENO);
+close(fd);
+```
+
+---
+
+## 2) Use the existing execution structure
+
+Your project already has execution-related files like:
+- exec.c
+- exec_redir.c
+- exec_utils.c
+
+Use these as the implementation anchor.
+
+A good split is:
+
+- `parse_redirections(...)` → fill `infile` / `outfile`
+- `redirect_input(...)` → apply input redirection
+- `redirect_output(...)` → apply output redirection
+- `execute_simple_cmd(...)` → run builtins or external commands
+
+This is the natural progression.
+
+---
+
+## 3) Then add pipes
+
+After single-command redirection works, move to pipelines.
+
+### Minimal pipe logic
+For a command chain like:
+
+```bash
+ls | grep .c | wc -l
+```
+
+do this:
+
+- create `pipefd[2]` for each connection
+- for each command:
+  - fork
+  - child:
+    - if not first command: read from previous pipe
+    - if not last command: write to next pipe
+    - call `execve` or builtin
+  - parent:
+    - close the ends it used
+    - keep the pipe for the next child
+- wait for all children at the end
+
+### Key rule
+For pipelines, each child should have:
+- stdin = previous pipe read end or STDIN
+- stdout = next pipe write end or STDOUT
+
+This is the classic shell pattern.
+
+---
+
+## 4) One rule to keep the architecture clean
+
+Do not mix parsing and execution.
+
+Keep these as separate stages:
+
+- tokenize
+- syntax validate
+- build command list
+- parse redirections
+- execute command(s)
+
+That keeps bugs much easier to isolate.
+
+---
+
+## 5) Test in this exact order
+
+After each stage, test:
+
+### Redirections
+```bash
+echo hello > /tmp/test
+cat < /tmp/test
+echo hi >> /tmp/test
+```
+
+### Pipes
+```bash
+ls | cat
+echo hello | wc -c
+```
+
+### Builtins with redirection
+```bash
+echo hello > file
+env > file
+```
+
+---
+
+## 6) Leave heredoc for last
+
+Do not implement heredoc yet. It creates more complexity than the main shell flow.
+
+Your note says:
+- step 6 = redirections + pipes
+- heredoc is later
+
+So keep heredoc out until after the basic pipeline logic works.
+
+---
+
+## Recommended order for your next coding pass
+
+1. finish `parse_redirections`
+2. implement `redirect_input` and `redirect_output`
+3. test `echo > file`, `cat < file`
+4. then implement simple `pipe` execution
+5. then pipeline tests
+6. only then think about heredoc
+
+---
+
+If you want, I can next give you a concrete function-by-function implementation plan for:
+- `parse_redirections`
+- `redirect_input`
+- `redirect_output`
+- `pipe` execution flow
+
+That will be the exact next coding blueprint.
+
+
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec.c)
+
+## Next concrete implementation
+
+Yes — the clean next move is to follow the Pipex pattern, but only for the parts your minishell already has: redirection and then pipelines.
+
+### 1) Start with redirection parsing
+Use the command structure already defined in minishell.h and the execution flow in exec.c.
+
+The idea is:
+
+- when you see `<`, `>`, or `>>` in the token list
+- fill:
+  - `cmd->infile`
+  - `cmd->outfile`
+  - `cmd->append`
+- remove those tokens from the argv list so only real command arguments remain
+
+Pseudo-flow:
+
+```c
+if (token is "<")
+{
+    next token -> cmd->infile
+}
+else if (token is ">")
+{
+    next token -> cmd->outfile
+    cmd->append = 0;
+}
+else if (token is ">>")
+{
+    next token -> cmd->outfile
+    cmd->append = 1;
+}
+```
+
+Then the actual execution side is already in place in exec.c:
+- `run_child()`
+- `redirect_input()`
+- `redirect_output()`
+
+---
+
+### 2) Apply redirection exactly like Pipex
+This is the key pattern from Pipex:
+
+```c
+fd = open(file, flags, 0644);
+dup2(fd, STDOUT_FILENO);
+close(fd);
+```
+
+For input:
+
+```c
+fd = open(file, O_RDONLY);
+dup2(fd, STDIN_FILENO);
+close(fd);
+```
+
+This belongs in:
+- exec_redir.c
+- and called from exec.c
+
+This is your first real execution milestone.
+
+---
+
+### 3) Keep builtins separate
+In exec.c, the logic already does:
+
+```c
+if (is_builtin(cmd->argv[0]))
+{
+    data->status = execute_builtin(data, cmd);
+    return (data->status);
+}
+```
+
+So for a builtin with redirection:
+- child or direct execution still needs the same `dup2` behavior
+- but you do not call `execve` for builtins
+
+For now, keep it simple:
+- builtins run directly in the parent
+- external commands use `fork + execve`
+
+---
+
+### 4) Then implement piping
+After redirection works, move to the pipe loop.
+
+Use the same Pipex structure:
+
+```c
+pipe(fd);
+pid = fork();
+
+if (pid == 0)
+{
+    if (prev_pipe_exists)
+        dup2(prev_read, STDIN_FILENO);
+    if (not_last_command)
+        dup2(curr_write, STDOUT_FILENO);
+
+    close all pipe fds;
+    execve(path, argv, envp);
+}
+else
+{
+    waitpid(pid, &status, 0);
+}
+```
+
+This is exactly the pattern from Pipex and should live in the execution layer, not the parser.
+
+---
+
+### 5) Keep the phases separate
+Do not mix everything in one function.
+
+The clean structure is:
+
+1. tokenize
+2. validate syntax
+3. build command list
+4. parse redirections
+5. execute command(s)
+6. wait and update status
+
+This is much easier to debug than trying to do all at once.
+
+---
+
+### 6) Skip heredoc for now
+You said step 6 already includes redirections and pipes, and heredoc should come later. That is the right choice.
+
+Focus on:
+- `>`
+- `>>`
+- `<`
+- then `|`
+
+---
+
+## Best immediate target
+I would do exactly this next:
+
+1. finish `parse_redirections`
+2. finish `redirect_input`
+3. finish `redirect_output`
+4. test:
+   - `echo hello > file`
+   - `cat < file`
+   - `echo hi >> file`
+5. then add the pipe loop
+
+That is the best bridge from your current shell to real execution.
+
+If you want, I can give you the exact function skeletons for:
+- `parse_redirections`
+- `redirect_input`
+- `redirect_output`
+- `execute_pipeline`
+with the exact minishell-friendly code structure.
