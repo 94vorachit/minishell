@@ -6,12 +6,24 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 14:54:42 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/02 15:24:00 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Checks whether a string is a valid numeric argument for `exit`.
+ * 
+ * What it does:
+ * 1. Rejects `NULL` or empty strings
+ * 2. Accepts an optional leading `+` or `-`
+ * 3. Verifies every remaining character is a digit
+ * 
+ * Returns:
+ * * 1 if valid
+ * * 0 if invalid
+ */
 int	is_numeric_exit_arg(char *arg)
 {
 	int	i;
@@ -32,14 +44,19 @@ int	is_numeric_exit_arg(char *arg)
 	return (1);
 }
 
+/**
+ * Handles the case where `exit` receives too many arguments.
+ */
 int	exit_too_many_args(t_data *data)
 {
-	ft_putstr_fd("exit\n", STDERR);
 	ft_putstr_fd("minishell: exit: too many arguments\n", STDERR);
 	data->status = 1;
 	return (1);
 }
 
+/**
+ * Handles invalid numeric input for `exit`.
+ */
 int	exit_numeric_required(void)
 {
 	ft_putstr_fd("exit\n", STDERR);
@@ -49,6 +66,27 @@ int	exit_numeric_required(void)
 	return (0);
 }
 
+/**
+ * Main implementation of the `exit` builtin.
+ * 
+ * What it does:
+ * 1. Validates input
+ * 2. If there is no argument:
+ * * uses the current shell status
+ * * frees shell resources
+ * * exits with that status
+ * 3. If there are 2 or more arguments:
+ * * calls exit_too_many_args()
+ * 4. If the argument is not numeric:
+ * * calls exit_numeric_required()
+ * 
+ * Otherwise:
+ * 1. converts the value to int
+ * 2. normalizes negative values
+ * 3. prints a terminal termination message
+ * 4. frees shell resources
+ * 5. exits with code % 256
+ */
 int	builtin_exit(t_data *data, t_cmd *cmd)
 {
 	int	code;
