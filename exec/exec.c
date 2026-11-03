@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 19:03:44 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 20:03:52 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,19 +99,24 @@ void	run_child(t_cmd *cmd, char *exec_path, char **envp)
  */
 void	set_child_status(t_data *data, int status)
 {
-	if (g_signal == SIGINT)
+	if (WIFEXITED(status))
 	{
-		data->status = 130;
+		data->status = WEXITSTATUS(status);
 		g_signal = 0;
 		return ;
 	}
-	if (g_signal == SIGQUIT)
+	if (WIFSIGNALED(status))
 	{
-		data->status = 131;
+		if (WTERMSIG(status) == SIGINT)
+			data->status = 130;
+		else if (WTERMSIG(status) == SIGQUIT)
+			data->status = 131;
+		else
+			data->status = 128 + WTERMSIG(status);
 		g_signal = 0;
 		return ;
 	}
-	data->status = WEXITSTATUS(status);
+	data->status = 1;
 	g_signal = 0;
 }
 
@@ -144,10 +149,21 @@ int	run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp)
 	if (pid == 0)
 		run_child(cmd, exec_path, envp);
 	waitpid(pid, &status, 0);
+	// while (waitpid(pid, &status, 0) == -1)
+	// {
+	// 	if (errno != EINTR)
+	// 	{
+	// 		perror("waitpid");
+	// 		free(exec_path);
+	// 		ft_free_split(envp);
+	// 		data->status = 1;
+	// 		return (ERROR);
+	// 	}
+	// }
 	free(exec_path);
 	ft_free_split(envp);
 	set_child_status(data, status);
-	return (SUCCESS);
+	return (data->status);
 }
 
 /**

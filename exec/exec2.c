@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 18:23:55 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 20:05:24 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,12 +45,24 @@ int	run_external_cmd(t_data *data, t_cmd *cmd)
 		sig_default();
 		exec_external_child(cmd, exec_path, envp);
 	}
-	waitpid(status, &child_status, 0);
+    waitpid(status, &child_status, 0);
+	// while (waitpid(status, &child_status, 0) == -1)
+	// {
+	// 	if (errno != EINTR)
+	// 	{
+	// 		perror("waitpid");
+	// 		sig_init();
+	// 		free(exec_path);
+	// 		ft_free_split(envp);
+	// 		data->status = 1;
+	// 		return (ERROR);
+	// 	}
+	// }
 	sig_init();
 	free(exec_path);
 	ft_free_split(envp);
 	set_child_status(data, child_status);
-	return (SUCCESS);
+	return (data->status);
 }
 
 /**

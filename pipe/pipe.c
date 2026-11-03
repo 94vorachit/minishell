@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:45:58 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 18:23:55 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 20:06:02 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,16 @@ void	wait_pipeline_children(t_data *data, pid_t *pids, int count)
 	while (i < count)
 	{
 		waitpid(pids[i], &status, 0);
+		// while (waitpid(pids[i], &status, 0) == -1)
+		// {
+		// 	if (errno != EINTR)
+		// 	{
+		// 		perror("waitpid");
+		// 		data->status = 1;
+		// 		sig_init();
+		// 		return ;
+		// 	}
+		// }
 		set_child_status(data, status);
 		i++;
 	}
