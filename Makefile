@@ -7,7 +7,8 @@ SRC = $(wildcard src/*.c) \
 	$(wildcard token/*.c) \
 	$(wildcard expand/*.c) \
 	$(wildcard exec/*.c) \
-	$(wildcard builtin/*.c)
+	$(wildcard builtin/*.c) \
+	$(wildcard pipe/*.c)
 	
 OBJ = $(SRC:.c=.o)
 LDLIBS = -lreadline
@@ -17,6 +18,9 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	@$(MAKE) -C libft
 	@$(CC) $(CFLAGS) $(OBJ) $(LDLIBS) libft/libft.a -o $(NAME)
+
+# lint:
+# 	./clang-tidy-23_linux-amd64 --checks='clang-analyzer-*' $(SRC)
 
 %.o: %.c
 	@$(CC) $(CFLAGS) -c $< -o $@
