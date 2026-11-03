@@ -10,6 +10,7 @@
 # include <readline/history.h>
 # include <sys/types.h>
 # include <sys/wait.h>
+# include <stddef.h>
 
 # define STDIN 0
 # define STDOUT 1

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 15:52:19 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 19:03:44 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,20 +87,32 @@ void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 /**
  * Converts the child exit status into the shell status.
  * 
+ * The exit status is converted from `waitpid` using the normal shell rule:
+ * - `Ctrl+C` -> 130
+ * - `Ctrl+\` -> 131
+ *
  * Behavior:
  * * If child exited normally:
  * `data->status = WEXITSTATUS(status)`
- * Else if it was terminated by a signal:
+ * * Else if it was terminated by a signal:
  * `data->status = 128 + WTERMSIG(status)`
- * 
- * This matches normal shell behavior.
  */
 void	set_child_status(t_data *data, int status)
 {
-	if (WIFEXITED(status))
-		data->status = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		data->status = 128 + WTERMSIG(status);
+	if (g_signal == SIGINT)
+	{
+		data->status = 130;
+		g_signal = 0;
+		return ;
+	}
+	if (g_signal == SIGQUIT)
+	{
+		data->status = 131;
+		g_signal = 0;
+		return ;
+	}
+	data->status = WEXITSTATUS(status);
+	g_signal = 0;
 }
 
 /**
