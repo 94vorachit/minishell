@@ -6,29 +6,11 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 01:46:38 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 18:38:54 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 15:16:31 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
-
-/**
- * Frees a dynamically allocated array of strings.
- */
-void	ft_free_split(char **arr)
-{
-	int	i;
-
-	if (!arr)
-		return ;
-	i = 0;
-	while (arr[i])
-	{
-		free(arr[i]);
-		i++;
-	}
-	free(arr);
-}
 
 /**
  * Releases all dynamically allocated memory owned by a command.

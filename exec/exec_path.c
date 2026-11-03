@@ -6,11 +6,29 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:12:56 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/29 03:25:19 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 15:43:15 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Frees a dynamically allocated array of strings.
+ */
+void	ft_free_split(char **arr)
+{
+	int	i;
+
+	if (!arr)
+		return ;
+	i = 0;
+	while (arr[i])
+	{
+		free(arr[i]);
+		i++;
+	}
+	free(arr);
+}
 
 /**
  * Checks whether a command exists and is executable inside one directory.
@@ -118,7 +136,11 @@ char	*find_executable_path(t_env *env, const char *cmd)
 	if (!cmd || cmd[0] == '\0')
 		return (NULL);
 	if (ft_strchr(cmd, '/'))
+	{
+		if (access(cmd, F_OK) != 0)
+			return (NULL);
 		return (ft_strdup(cmd));
+	}
 	path_env = env_get(env, "PATH");
 	if (!path_env || !path_env[0])
 		return (NULL);

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 19:01:30 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 15:52:19 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,10 @@ int	prepare_execution(t_data *data, t_cmd *cmd,
 	*exec_path = find_executable_path(data->env, cmd->argv[0]);
 	if (!*exec_path)
 	{
-		ft_putstr_fd("minishell: command not found: ", STDERR);
+		if (ft_strchr(cmd->argv[0], '/'))
+			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+		else
+			ft_putstr_fd("minishell: command not found: ", STDERR);
 		ft_putstr_fd(cmd->argv[0], STDERR);
 		ft_putstr_fd("\n", STDERR);
 		data->status = 127;
@@ -136,153 +139,23 @@ int	run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp)
 }
 
 /**
- * Entry point for one shell command.
- * 
- * Flow:
- * 1. Validate arguments
- * 2. Call prepare_execution(...)
- * 3. If preparation fails, return
- * 4. Otherwise call run_process(...)
- * 
- * This is the public function used by the rest of the shell.
+ * Executes a built-in command with a temporary dup of stdin/stdout.
  */
-int	execute_simple_cmd(t_data *data, t_cmd *cmd)
+int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 {
-	char	*exec_path;
-	char	**envp;
+	int	in_fd;
+	int	out_fd;
 
-	if (!data || !cmd || !cmd->argv || !cmd->argv[0])
-		return (SUCCESS);
-	if (is_builtin(cmd->argv[0]))
-	{
-		int	in_fd;
-		int	out_fd;
-
-		in_fd = dup(STDIN_FILENO);
-		out_fd = dup(STDOUT_FILENO);
-		if (cmd->infile && redirect_input(cmd) == -1)
-			return (ERROR);
-		if (cmd->outfile && redirect_output(cmd) == -1)
-			return (ERROR);
-		data->status = execute_builtin(data, cmd);
-		dup2(in_fd, STDIN_FILENO);
-		dup2(out_fd, STDOUT_FILENO);
-		close(in_fd);
-		close(out_fd);
-		return (data->status);
-	}
-	exec_path = find_executable_path(data->env, cmd->argv[0]);
-	if (!exec_path)
-	{
-		ft_putstr_fd("minishell: command not found: ", STDERR);
-		ft_putstr_fd(cmd->argv[0], STDERR);
-		ft_putstr_fd("\n", STDERR);
-		data->status = 127;
-		return (127);
-	}
-	envp = env_to_char_array(data->env);
-	if (!envp)
-	{
-		free(exec_path);
-		data->status = 1;
-		return (1);
-	}
-	if (fork() == 0)
-	{
-		if (cmd->infile && redirect_input(cmd) == -1)
-			exit(1);
-		if (cmd->outfile && redirect_output(cmd) == -1)
-			exit(1);
-		execve(exec_path, cmd->argv, envp);
-		perror("execve");
-		exit(127);
-	}
-	waitpid(-1, NULL, 0);
-	free(exec_path);
-	ft_free_split(envp);
-	return (SUCCESS);
-}
-
-int	execute_pipeline(t_data *data, t_cmd *cmd)
-{
-	int		pipefd[2];
-	int		prev_fd;
-	pid_t	*pids;
-	t_cmd	*cur;
-	int		status;
-	int		count;
-	int		i;
-
-	count = 0;
-	cur = cmd;
-	while (cur)
-	{
-		count++;
-		cur = cur->next;
-	}
-	pids = malloc(sizeof(pid_t) * count);
-	if (!pids)
+	in_fd = dup(STDIN_FILENO);
+	out_fd = dup(STDOUT_FILENO);
+	if (cmd->infile && redirect_input(cmd) == -1)
 		return (ERROR);
-	prev_fd = -1;
-	cur = cmd;
-	i = 0;
-	while (cur)
-	{
-		if (cur->next && pipe(pipefd) < 0)
-		{
-			perror("pipe");
-			free(pids);
-			return (ERROR);
-		}
-		pids[i] = fork();
-		if (pids[i] == 0)
-		{
-			if (prev_fd != -1)
-			{
-				dup2(prev_fd, STDIN_FILENO);
-				close(prev_fd);
-			}
-			if (cur->next)
-			{
-				dup2(pipefd[1], STDOUT_FILENO);
-				close(pipefd[0]);
-				close(pipefd[1]);
-			}
-			if (cur->infile && redirect_input(cur) == -1)
-				exit(1);
-			if (cur->outfile && redirect_output(cur) == -1)
-				exit(1);
-			if (is_builtin(cur->argv[0]))
-				exit(execute_builtin(data, cur));
-			else
-			{
-				char	*path;
-				char	**envp;
-
-				path = find_executable_path(data->env, cur->argv[0]);
-				envp = env_to_char_array(data->env);
-				if (!path || !envp)
-					exit(127);
-				execve(path, cur->argv, envp);
-				perror("execve");
-				exit(127);
-			}
-		}
-		if (prev_fd != -1)
-			close(prev_fd);
-		if (cur->next)
-		{
-			close(pipefd[1]);
-			prev_fd = pipefd[0];
-		}
-		cur = cur->next;
-		i++;
-	}
-	for (i = 0; i < count; i++)
-	{
-		waitpid(pids[i], &status, 0);
-		set_child_status(data, status);
-	}
-	free(pids);
+	if (cmd->outfile && redirect_output(cmd) == -1)
+		return (ERROR);
+	data->status = execute_builtin(data, cmd);
+	dup2(in_fd, STDIN_FILENO);
+	dup2(out_fd, STDOUT_FILENO);
+	close(in_fd);
+	close(out_fd);
 	return (data->status);
 }
