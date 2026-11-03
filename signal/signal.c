@@ -6,11 +6,13 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:45:15 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 17:59:41 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+volatile sig_atomic_t	g_signal = 0;
 
 /**
  * This file sets up how the shell reacts when the user presses Ctrl+C or Ctrl+.
@@ -59,6 +61,7 @@ void	sig_disabled_display(void)
 void	sig_reprompt(int sig)
 {
 	(void)sig;
+	g_signal = 1;
 	sig_disabled_display();
 	write(1, "\n", 1);
 	rl_on_new_line();
@@ -80,6 +83,7 @@ void	sig_reprompt(int sig)
 void	sig_quit(int sig)
 {
 	(void)sig;
+	g_signal = 1;
 	sig_disabled_display();
 	rl_on_new_line();
 	rl_redisplay();
