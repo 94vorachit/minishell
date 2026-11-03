@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 15:24:00 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 17:59:41 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,11 +57,11 @@ int	exit_too_many_args(t_data *data)
 /**
  * Handles invalid numeric input for `exit`.
  */
-int	exit_numeric_required(void)
+int	exit_numeric_required(t_data *data)
 {
 	ft_putstr_fd("exit\n", STDERR);
 	ft_putstr_fd("minishell: exit: numeric argument required\n", STDERR);
-	free_shell();
+	free_shell(data);
 	exit(2);
 	return (0);
 }
@@ -97,13 +97,13 @@ int	builtin_exit(t_data *data, t_cmd *cmd)
 	if (!cmd->argv[1])
 	{
 		status = data->status;
-		free_shell();
+		free_shell(data);
 		exit(status);
 	}
 	if (cmd->argv[2])
 		return (exit_too_many_args(data));
 	if (!is_numeric_exit_arg(cmd->argv[1]))
-		return (exit_numeric_required());
+		return (exit_numeric_required(data));
 	code = ft_atoi(cmd->argv[1]);
 	if (code < 0)
 		code = 256 + code;
@@ -111,7 +111,7 @@ int	builtin_exit(t_data *data, t_cmd *cmd)
 		STDERR);
 	ft_putnbr_fd(code, STDERR);
 	ft_putstr_fd("\n", STDERR);
-	free_shell();
+	free_shell(data);
 	exit(code % 256);
 	return (0);
 }
