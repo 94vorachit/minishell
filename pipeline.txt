@@ -1,0 +1,22 @@
+How the flow works
+
+For a pipeline like:
+`ls | wc -l`
+
+the logic is:
+1.create a linked list of two commands
+2. fork child 1 for ls
+3. child 1 writes to pipe
+4. fork child 2 for wc -l
+5. child 2 reads from pipe
+6. parent waits for both children
+7. final shell status is the last command’s exit status
+
+Important notes
+
+This file depends on:
+1. pipe_utils2.c: child I/O setup and exec logic
+2. pipe_utils.c: splitting tokens into command segments
+3. exec.c: status handling and command execution
+
+If you want, I can also explain the full pipeline execution sequence end-to-end using this file and pipe_utils2.c together.
