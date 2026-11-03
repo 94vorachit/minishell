@@ -75,9 +75,9 @@ typedef struct s_exp_state
 	int		in_double;
 } t_exp_state;
 
-extern t_data	*g_data;
+extern volatile sig_atomic_t	g_signal;
 
-void	free_shell(void);
+void	free_shell(t_data *data);
 t_env	*ft_env_new(char *value);
 void	ft_env_clear(t_env **env);
 
@@ -133,6 +133,14 @@ void	ft_free_cmd(t_cmd *cmd);
 int		ft_count_env(t_env *env);
 int		ft_copy_env(char **arr, t_env *env);
 char	*find_executable_path(t_env *env, const char *cmd);
+int		prepare_execution(t_data *data, t_cmd *cmd,
+			char **exec_path, char ***envp);
+void	run_child(t_cmd *cmd, char *exec_path, char **envp);
+void	set_child_status(t_data *data, int status);
+int		run_process(t_data *data, t_cmd *cmd,
+			char *exec_path, char **envp);
+int		run_builtin_cmd(t_data *data, t_cmd *cmd);
+int		run_external_cmd(t_data *data, t_cmd *cmd);
 int		redirect_input(t_cmd *cmd);
 int		redirect_output(t_cmd *cmd);
 int		parse_redirections(t_token *tokens, t_cmd *cmd);
