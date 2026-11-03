@@ -6,13 +6,11 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 18:38:54 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/03 17:59:41 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
-
-t_data	*g_data;
 
 void	ft_error(int error_code)
 {
@@ -21,16 +19,15 @@ void	ft_error(int error_code)
 	exit(ERROR);
 }
 
-void	free_shell(void)
+void	free_shell(t_data *data)
 {
 	rl_clear_history();
-	if (g_data)
+	if (data)
 	{
-		ft_token_clear(&g_data->tokens);
-		ft_env_clear(&g_data->env);
-		ft_env_clear(&g_data->export);
-		free(g_data);
-		g_data = NULL;
+		ft_token_clear(&data->tokens);
+		ft_env_clear(&data->env);
+		ft_env_clear(&data->export);
+		free(data);
 	}
 }
 
@@ -109,84 +106,84 @@ int	init(t_data *mini, char **env)
 	return (0);
 }
 
-int main(int ac, char **av, char **env)
+int	main(int ac, char **av, char **env)
 {
-    char	*line;
+	char	*line;
+	t_data	*data;
 	t_cmd	cmd;
-    
-    (void) av;
+
+	(void)av;
 	if (ac != 1)
 	{
-		// puterror("\e[0;37mUse", "./minishell without arguments");
-        ft_putstr_fd("minishell: Use ./minishell without arguments", 2);
+		ft_putstr_fd("minishell: Use ./minishell without arguments", 2);
 		return (0);
 	}
-    g_data = malloc(sizeof(*g_data));
-    if (!g_data)
-        return (ERROR);
-    if (init(g_data, env) == -1)
+	data = malloc(sizeof(*data));
+	if (!data)
+		return (ERROR);
+	if (init(data, env) == -1)
 	{
-		ft_env_clear(&g_data->env);		
-		ft_env_clear(&g_data->export);		
-		free(g_data);
+		ft_env_clear(&data->env);
+		ft_env_clear(&data->export);
+		free(data);
 		return (ERROR);
 	}
-    sig_init();
-    while (1)
-    {
-        line = readline("minishell > ");
-        if (!line)
+	sig_init();
+	while (1)
+	{
+		line = readline("minishell > ");
+		if (!line)
 		{
 			ft_putstr_fd("exit\n", STDERR);
-			free_shell();
+			free_shell(data);
 			return (SUCCESS);
 		}
-        if (line[0] == '\0')
-        {
-        	free(line);
-        	continue ;
-        }
-		if (lexer(line, &g_data->tokens) == 0)
-        {
-            if (ft_validate_syntax(g_data->tokens) == SUCCESS)
-            {
-                if (expand_tokens(g_data, g_data->tokens) == -1)
-                    g_data->status = ERROR;
-                else
-                {
-                    if (ft_has_pipe(g_data->tokens))
-                    {
-                        t_cmd *cmds;
-
-                        cmds = NULL;
-                        if (build_pipeline_cmds(g_data->tokens, &cmds) == 0)
-                            g_data->status = execute_pipeline(g_data, cmds);
-                        else
-                            g_data->status = 2;
-                        ft_free_cmd_list(&cmds);
-                    }
-                    else
-                    {
-                        if (build_simple_cmd(g_data->tokens, &cmd) == 0)
-                            g_data->status = execute_simple_cmd(g_data, &cmd);
-                        else
-                            g_data->status = 2;
-                        ft_free_cmd(&cmd);
-                    }
-                    add_history(line);
-                }
-            }
-            else
+		if (line[0] == '\0')
+		{
+			free(line);
+			continue ;
+		}
+		if (lexer(line, &data->tokens) == 0)
+		{
+			if (ft_validate_syntax(data->tokens) == SUCCESS)
 			{
-                g_data->status = SYNTAX_ERROR;
+				if (expand_tokens(data, data->tokens) == -1)
+					data->status = ERROR;
+				else
+				{
+					if (ft_has_pipe(data->tokens))
+					{
+						t_cmd	*cmds;
+
+						cmds = NULL;
+						if (build_pipeline_cmds(data->tokens, &cmds) == 0)
+							data->status = execute_pipeline(data, cmds);
+						else
+							data->status = 2;
+						ft_free_cmd_list(&cmds);
+					}
+					else
+					{
+						if (build_simple_cmd(data->tokens, &cmd) == 0)
+							data->status = execute_simple_cmd(data, &cmd);
+						else
+							data->status = 2;
+						ft_free_cmd(&cmd);
+					}
+					add_history(line);
+				}
+			}
+			else
+			{
+				data->status = SYNTAX_ERROR;
 				exit(SYNTAX_ERROR);
 			}
-        }
-        else
-            g_data->status = SYNTAX_ERROR;
-        ft_token_clear(&g_data->tokens);
-        free(line);
-    }
-	free_shell();
+		}
+		else
+			data->status = SYNTAX_ERROR;
+		ft_token_clear(&data->tokens);
+		free(line);
+	}
+	free_shell(data);
 	return (SUCCESS);
 }
