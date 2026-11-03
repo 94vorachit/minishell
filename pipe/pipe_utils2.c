@@ -127,6 +127,7 @@ void	run_child_cmd(t_data *data, t_cmd *cur, int prev_fd, int pipefd[2])
 	char	*path;
 	char	**envp;
 
+	sig_default();
 	setup_child_io(cur, prev_fd, pipefd);
 	if (redirect_child_cmd(cur) == -1)
 		exit(ERROR);

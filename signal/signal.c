@@ -85,6 +85,7 @@ void	sig_quit(int sig)
 	(void)sig;
 	g_signal = 1;
 	sig_disabled_display();
+	write(1, "\n", 1);
 	rl_on_new_line();
 	rl_redisplay();
 }

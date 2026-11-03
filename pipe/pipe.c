@@ -69,6 +69,7 @@ void	wait_pipeline_children(t_data *data, pid_t *pids, int count)
 	int	i;
 	int	status;
 
+	sig_ignore();
 	i = 0;
 	while (i < count)
 	{
@@ -76,6 +77,7 @@ void	wait_pipeline_children(t_data *data, pid_t *pids, int count)
 		set_child_status(data, status);
 		i++;
 	}
+	sig_init();
 }
 
 /**
