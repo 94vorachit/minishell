@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 18:54:49 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 12:56:06 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,12 +96,25 @@ int	ft_init_env(t_env **mini_env, char **env)
 
 int	init(t_data *mini, char **env)
 {
+	// char	*cwd;
+
 	mini->status = 0; //This sets the shell's initial exit status to success.
 	// mini->cmd_count = 0; //No commands have been parsed yet.
 	mini->tokens = NULL;
 	mini->export = NULL;
 	if (ft_init_env(&mini->env, env) == -1)
 		return (-1);
+	// if (!env_get(mini->env, "PWD"))
+	// {
+	// 	cwd = getcwd(NULL, 0);
+	// 	if (!cwd || env_set(&mini->env, "PWD", cwd) == -1)
+	// 	{
+	// 		free(cwd);
+	// 		ft_env_clear(&mini->env);
+	// 		return (-1);
+	// 	}
+	// 	free(cwd);
+	// }
 	ft_shlvl(mini->env);
 	return (0);
 }
@@ -147,7 +160,7 @@ int	main(int ac, char **av, char **env)
 		{
 			if (ft_validate_syntax(data->tokens) == SUCCESS)
 			{
-				if (expand_tokens(data, data->tokens) == -1)
+				if (expand_tokens(data, &data->tokens) == -1)
 					data->status = ERROR;
 				else
 				{

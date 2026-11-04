@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 15:05:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 19:09:47 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 13:46:33 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,31 +155,25 @@ char	*expand_word(t_data *data, const char *word)
 }
 
 /**
- * Goes through all tokens in the linked list.
+ * removes a token safely
  * 
- * For each token whose type is `T_WORD`, it:
- * 1. expands it with `expand_word`
- * 2. frees the old token value
- * 3. replaces it with the expanded value
- * 
- * This is the step that applies expansion across all parsed shell 
- * words before execution.
+ * 1. Saves the token after the current one.
+ * 2. Links the previous token directly to that next token.
+ * 3. Updates the list head if removing the first token.
+ * 4. Frees the token value and token structure.
+ * 5. Updates `current` to the next token.
  */
-int	expand_tokens(t_data *data, t_token *tokens)
+void	remove_empty_word(t_token **tokens, t_token **cur,
+				t_token **pre)
 {
-	char	*expanded;
+	t_token	*next;
 
-	while (tokens)
-	{
-		if (tokens->type == T_WORD)
-		{
-			expanded = expand_word(data, tokens->value);
-			if (!expanded)
-				return (-1);
-			free(tokens->value);
-			tokens->value = expanded;
-		}
-		tokens = tokens->next;
-	}
-	return (0);
+	next = (*cur)->next;
+	if (*pre)
+		(*pre)->next = next;
+	else
+		*tokens = next;
+	free((*cur)->value);
+	free(*cur);
+	*cur = next;
 }

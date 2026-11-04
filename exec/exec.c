@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 20:03:52 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 12:10:33 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,10 +78,10 @@ void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 		exit(1);
 	}
 	execve(exec_path, cmd->argv, envp);
-	perror("execve");
+	perror(exec_path);
 	free(exec_path);
 	ft_free_split(envp);
-	exit(127);
+	exit(126);
 }
 
 /**

@@ -110,6 +110,7 @@ char	*set_redir_out_token(char *line, int *index, t_token_type *type);
 void	ft_print_tokens(t_token *tokens);
 int		lexer(char *line, t_token **tokens);
 int		ft_validate_syntax(t_token *tokens);
+int		word_has_quote(const char *word);
 
 /* expand */
 int		is_var_start(char c);
@@ -125,7 +126,7 @@ int		handle_double_quote(int *in_double, size_t *i);
 int		append_literal_char(char **result, const char *word, size_t *i);
 int		process_char(t_exp_state *state);
 char	*expand_word(t_data *data, const char *word);
-int		expand_tokens(t_data *data, t_token *tokens);
+int		expand_tokens(t_data *data, t_token **tokens);
 
 char	*env_get(t_env *env, const char *name);
 

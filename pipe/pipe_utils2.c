@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:32:23 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 18:23:56 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 12:10:21 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,8 +136,8 @@ void	run_child_cmd(t_data *data, t_cmd *cur, int prev_fd, int pipefd[2])
 	path = find_executable_path(data->env, cur->argv[0]);
 	envp = env_to_char_array(data->env);
 	if (!path || !envp)
-		exit(UNKNOWN_COMMAND);
+		exit(126);
 	execve(path, cur->argv, envp);
-	perror("execve");
-	exit(UNKNOWN_COMMAND);
+	perror(path);
+	exit(126);
 }

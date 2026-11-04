@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 20:05:24 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 12:51:44 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,8 @@ void	exec_external_child(t_cmd *cmd, char *exec_path, char **envp)
 	if (cmd->outfile && redirect_output(cmd) == -1)
 		exit(1);
 	execve(exec_path, cmd->argv, envp);
-	perror("execve");
-	exit(127);
+	perror(exec_path);
+	exit(126);
 }
 
 /**
@@ -45,7 +45,7 @@ int	run_external_cmd(t_data *data, t_cmd *cmd)
 		sig_default();
 		exec_external_child(cmd, exec_path, envp);
 	}
-    waitpid(status, &child_status, 0);
+	waitpid(status, &child_status, 0);
 	// while (waitpid(status, &child_status, 0) == -1)
 	// {
 	// 	if (errno != EINTR)
@@ -71,6 +71,8 @@ int	run_external_cmd(t_data *data, t_cmd *cmd)
 int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 {
 	if (!data || !cmd || !cmd->argv || !cmd->argv[0])
+		return (SUCCESS);
+	if (cmd->argv[0][0] == '\0')
 		return (SUCCESS);
 	if (is_builtin(cmd->argv[0]))
 		return (run_builtin_cmd(data, cmd));

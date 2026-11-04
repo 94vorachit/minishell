@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 18:59:04 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 19:54:42 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/04 12:54:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,5 +78,16 @@ int	expand_status_var(t_data *data, char **result, size_t *i)
 	if (!*result)
 		return (-1);
 	*i += 2;
+	return (0);
+}
+
+int	word_has_quote(const char *word)
+{
+	while (*word)
+	{
+		if (*word == '\'' || *word == '"')
+			return (1);
+		word++;
+	}
 	return (0);
 }
