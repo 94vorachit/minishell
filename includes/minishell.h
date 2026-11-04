@@ -111,6 +111,7 @@ void	ft_print_tokens(t_token *tokens);
 int		lexer(char *line, t_token **tokens);
 int		ft_validate_syntax(t_token *tokens);
 int		word_has_quote(const char *word);
+void	remove_empty_word(t_token **tokens, t_token **cur, t_token **pre);
 
 /* expand */
 int		is_var_start(char c);
