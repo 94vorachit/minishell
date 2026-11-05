@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:58:31 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 18:03:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,12 +100,27 @@ void	assign_redirection(t_cmd *cmd, t_token_type type, char *value)
 int	set_redirection(t_cmd *cmd, t_token *token)
 {
 	char	*value;
+	int	fd;
 
 	if (!token->next || token->next->type != T_WORD)
 		return (-1);
 	value = ft_strdup(token->next->value);
 	if (!value)
 		return (-1);
+	if (token->type == T_REDIR_OUT || token->type == T_APPEND)
+	{
+		if (token->type == T_APPEND)
+			fd = open(value, O_WRONLY | O_CREAT | O_APPEND, 0644);
+		else
+			fd = open(value, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (fd < 0)
+		{
+			perror(value);
+			free(value);
+			return (-1);
+		}
+		close(fd);
+	}
 	assign_redirection(cmd, token->type, value);
 	return (0);
 }
@@ -123,6 +138,7 @@ int	set_redirection(t_cmd *cmd, t_token *token)
 int	parse_redirections(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
+	char	*value;
 
 	cur = tokens;
 	while (cur && cur->type != T_PIPE)
@@ -131,6 +147,19 @@ int	parse_redirections(t_token *tokens, t_cmd *cmd)
 		{
 			if (!cur->next || cur->next->type != T_WORD)
 				return (-1);
+			if (cur->type == T_REDIR_IN)
+			{
+				value = ft_strdup(cur->next->value);
+				if (!value)
+					return (-1);
+				if (access(value, F_OK) != 0)
+				{
+					free(cmd->infile);
+					cmd->infile = value;
+					return (SUCCESS);
+				}
+				free(value);
+			}
 			if (set_redirection(cmd, cur) == -1)
 				return (-1);
 			cur = cur->next;

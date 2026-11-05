@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:44:38 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 17:37:10 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,14 @@ int	redirect_file(char *infile)
 	fd = open(infile, O_RDONLY);
 	if (fd < 0)
 	{
-		perror(infile);
+		if (errno == ENOENT)
+		{
+			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+			ft_putstr_fd(infile, STDERR);
+			ft_putstr_fd("\n", STDERR);
+		}
+		else
+			perror(infile);
 		return (-1);
 	}
 	if (dup2(fd, STDIN_FILENO) < 0)
@@ -142,7 +149,14 @@ int	redirect_output(t_cmd *cmd)
 		fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0)
 	{
-		perror(cmd->outfile);
+		if (errno == ENOENT)
+		{
+			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+			ft_putstr_fd(cmd->outfile, STDERR);
+			ft_putstr_fd("\n", STDERR);
+		}
+		else
+			perror(cmd->outfile);
 		return (-1);
 	}
 	if (dup2(fd, STDOUT_FILENO) < 0)
