@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:14:45 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:29:47 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 
 /**
  * Counts how many `T_WORD` tokens appear before a pipe.
- * 
+ *
  * Needed to allocate the correct size for `cmd->argv`.
- * 
+ *
  * Behavior:
  * * Walks the token list until `T_PIPE`
  * * Increments `argc` for every word
@@ -42,12 +42,12 @@ int	count_args(t_token *tokens)
 
 /**
  * Fills cmd->argv with the actual command arguments.
- * 
+ *
  * Behavior:
  * * Iterates tokens again
  * * For each T_WORD, duplicates the token value into cmd->argv[i]
  * * Adds a final NULL at the end
- * * If a redirection is found, skips the next token because that token 
+ * * If a redirection is found, skips the next token because that token
  * is file name, not command arg
  */
 int	fill_argv(t_token *tokens, t_cmd *cmd)
@@ -76,21 +76,21 @@ int	fill_argv(t_token *tokens, t_cmd *cmd)
 
 /**
  * Replaces stdin with the file from `cmd->infile`.
- * 
+ *
  * Behavior:
  * 1. Opens the file with `open(..., O_RDONLY)`
  * 2. If fail: prints `perror(...)`
  * 3. Uses `dup2(fd, STDIN_FILENO)`
  * 4. Closes the file descriptor
  */
-int	redirect_input(t_cmd *cmd)
+int	redirect_file(char *infile)
 {
 	int	fd;
 
-	fd = open(cmd->infile, O_RDONLY);
+	fd = open(infile, O_RDONLY);
 	if (fd < 0)
 	{
-		perror(cmd->infile);
+		perror(infile);
 		return (-1);
 	}
 	if (dup2(fd, STDIN_FILENO) < 0)
@@ -103,9 +103,25 @@ int	redirect_input(t_cmd *cmd)
 	return (0);
 }
 
+int	redirect_input(t_cmd *cmd)
+{
+	if (cmd->heredoc_fd != -1)
+	{
+		if (dup2(cmd->heredoc_fd, STDIN_FILENO) < 0)
+		{
+			perror("dup2");
+			return (-1);
+		}
+		close(cmd->heredoc_fd);
+		cmd->heredoc_fd = -1;
+		return (0);
+	}
+	return (redirect_file(cmd->infile));
+}
+
 /**
  * Replaces stdout with the output file.
- * 
+ *
  * Behavior:
  * 1. Opens the file with:
  * * `O_WRONLY | O_CREAT`
@@ -117,14 +133,13 @@ int	redirect_input(t_cmd *cmd)
 int	redirect_output(t_cmd *cmd)
 {
 	int	fd;
-	int	flags;
 
-	flags = O_WRONLY | O_CREAT;
+	if (!cmd->outfile)
+		return (0);
 	if (cmd->append)
-		flags |= O_APPEND;
+		fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
 	else
-		flags |= O_TRUNC;
-	fd = open(cmd->outfile, flags, 0644);
+		fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd < 0)
 	{
 		perror(cmd->outfile);
@@ -142,14 +157,14 @@ int	redirect_output(t_cmd *cmd)
 
 /**
  * Builds one command structure from the token list.
- * 
+ *
  * Flow:
  * 1. Zero-initialize `cmd`
  * 2. Call `parse_redirections(tokens, cmd)` to store redirection files
  * 3. Count args with `count_args`
  * 4. Allocate `argv`
  * 5. Fill `argv` with `fill_argv`
- * 
+ *
  * This is the main parser for a single command.
  */
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
