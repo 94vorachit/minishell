@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 13:49:43 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,18 +166,27 @@ int	main(int ac, char **av, char **env)
 				else if (ft_has_pipe(data->tokens))
 				{
 					t_cmd	*cmds;
+					int	build_ret;
 
 					cmds = NULL;
-					if (build_pipeline_cmds(data->tokens, &cmds) == 0)
+					build_ret = build_pipeline_cmds(data->tokens, &cmds);
+					if (build_ret == 0)
 						data->status = execute_pipeline(data, cmds);
+					else if (build_ret == ERROR)
+						data->status = ERROR;
 					else
 						data->status = SYNTAX_ERROR;
 					ft_free_cmd_list(&cmds);
 				}
 				else
 				{
-					if (build_simple_cmd(data->tokens, &cmd) == 0)
+					int	build_ret;
+
+					build_ret = build_simple_cmd(data->tokens, &cmd);
+					if (build_ret == 0)
 						data->status = execute_simple_cmd(data, &cmd);
+					else if (build_ret == ERROR)
+						data->status = ERROR;
 					else
 						data->status = SYNTAX_ERROR;
 					ft_free_cmd(&cmd);

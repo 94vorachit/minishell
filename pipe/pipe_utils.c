@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:15:04 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:00:34 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,17 +77,25 @@ void	cmd_add_back(t_cmd **head, t_cmd *new_cmd)
 int	add_pipeline_segment(t_token *start, t_token *pipe_pos, t_cmd **head)
 {
 	t_cmd	*new_cmd;
+	int	ret;
 
 	if (pipe_pos == start)
 		return (-1);
 	new_cmd = ft_calloc(1, sizeof(*new_cmd));
 	if (!new_cmd)
 		return (-1);
-	if (build_simple_cmd(start, new_cmd) == -1)
+	ret = build_simple_cmd(start, new_cmd);
+	if (ret == -1)
 	{
 		ft_free_cmd(new_cmd);
 		free(new_cmd);
 		return (-1);
+	}
+	if (ret == ERROR)
+	{
+		ft_free_cmd(new_cmd);
+		free(new_cmd);
+		return (ERROR);
 	}
 	cmd_add_back(head, new_cmd);
 	return (0);
@@ -106,6 +114,7 @@ int	add_pipeline_segment(t_token *start, t_token *pipe_pos, t_cmd **head)
 int	append_last_pipeline_cmd(t_token *start, t_cmd **head)
 {
 	t_cmd	*new_cmd;
+	int	ret;
 
 	new_cmd = ft_calloc(1, sizeof(*new_cmd));
 	if (!new_cmd)
@@ -113,11 +122,18 @@ int	append_last_pipeline_cmd(t_token *start, t_cmd **head)
 		ft_free_cmd_list(head);
 		return (-1);
 	}
-	if (build_simple_cmd(start, new_cmd) == -1)
+	ret = build_simple_cmd(start, new_cmd);
+	if (ret == -1)
 	{
 		free(new_cmd);
 		ft_free_cmd_list(head);
 		return (-1);
+	}
+	if (ret == ERROR)
+	{
+		free(new_cmd);
+		ft_free_cmd_list(head);
+		return (ERROR);
 	}
 	cmd_add_back(head, new_cmd);
 	return (0);

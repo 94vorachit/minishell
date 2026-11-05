@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 18:03:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,9 +115,16 @@ int	set_redirection(t_cmd *cmd, t_token *token)
 			fd = open(value, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 		if (fd < 0)
 		{
-			perror(value);
+			if (errno == ENOENT)
+			{
+				ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+				ft_putstr_fd(value, STDERR);
+				ft_putstr_fd("\n", STDERR);
+			}
+			else
+				perror(value);
 			free(value);
-			return (-1);
+			return (ERROR);
 		}
 		close(fd);
 	}
@@ -139,6 +146,7 @@ int	parse_redirections(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
 	char	*value;
+	int	ret;
 
 	cur = tokens;
 	while (cur && cur->type != T_PIPE)
@@ -160,8 +168,9 @@ int	parse_redirections(t_token *tokens, t_cmd *cmd)
 				}
 				free(value);
 			}
-			if (set_redirection(cmd, cur) == -1)
-				return (-1);
+			ret = set_redirection(cmd, cur);
+			if (ret != 0)
+				return (ret);
 			cur = cur->next;
 		}
 		cur = cur->next;

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 17:37:10 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,6 +184,7 @@ int	redirect_output(t_cmd *cmd)
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 {
 	int	argc;
+	int	parse_ret;
 
 	cmd->infile = NULL;
 	cmd->outfile = NULL;
@@ -202,11 +203,18 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 		cmd->argv = NULL;
 		return (-1);
 	}
-	if (parse_redirections(tokens, cmd) == -1)
+	parse_ret = parse_redirections(tokens, cmd);
+	if (parse_ret == -1)
 	{
 		ft_free_split(cmd->argv);
 		cmd->argv = NULL;
 		return (-1);
+	}
+	if (parse_ret == ERROR)
+	{
+		ft_free_split(cmd->argv);
+		cmd->argv = NULL;
+		return (ERROR);
 	}
 	return (0);
 }
