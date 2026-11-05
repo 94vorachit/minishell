@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 20:37:26 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:43:15 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,27 +126,20 @@ int	redirect_input(t_cmd *cmd)
 	return (redirect_file(cmd->infile));
 }
 
-/**
- * Replaces stdout with the output file.
- *
- * Behavior:
- * 1. Opens the file with:
- * * `O_WRONLY | O_CREAT`
- * * `O_TRUNC` for `>`
- * * `O_APPEND` for `>>`
- * 2. Uses `dup2(fd, STDOUT_FILENO)`
- * 3. Closes the file
- */
+int	open_output_file(t_cmd *cmd)
+{
+	if (cmd->append)
+		return (open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644));
+	return (open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644));
+}
+
 int	redirect_output(t_cmd *cmd)
 {
 	int	fd;
 
 	if (!cmd->outfile)
 		return (0);
-	if (cmd->append)
-		fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
-	else
-		fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	fd = open_output_file(cmd);
 	if (fd < 0)
 	{
 		if (errno == ENOENT)
@@ -169,11 +162,8 @@ int	redirect_output(t_cmd *cmd)
 	return (0);
 }
 
-int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
+int	init_simple_cmd(t_cmd *cmd)
 {
-	int	argc;
-	int	parse_ret;
-
 	cmd->infile = NULL;
 	cmd->outfile = NULL;
 	cmd->heredoc = NULL;
@@ -181,17 +171,11 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 	cmd->append = 0;
 	cmd->next = NULL;
 	cmd->argv = NULL;
-	argc = count_args(tokens);
-	cmd->argv = malloc(sizeof(char *) * (argc + 1));
-	if (!cmd->argv)
-		return (-1);
-	if (fill_argv(tokens, cmd) == -1)
-	{
-		ft_free_split(cmd->argv);
-		cmd->argv = NULL;
-		return (-1);
-	}
-	parse_ret = parse_redirections(tokens, cmd);
+	return (0);
+}
+
+int	finalize_simple_cmd(t_cmd *cmd, int parse_ret)
+{
 	if (parse_ret == -1)
 	{
 		ft_free_split(cmd->argv);
@@ -205,4 +189,24 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 		return (ERROR);
 	}
 	return (0);
+}
+
+int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
+{
+	int	argc;
+	int	parse_ret;
+
+	init_simple_cmd(cmd);
+	argc = count_args(tokens);
+	cmd->argv = malloc(sizeof(char *) * (argc + 1));
+	if (!cmd->argv)
+		return (-1);
+	if (fill_argv(tokens, cmd) == -1)
+	{
+		ft_free_split(cmd->argv);
+		cmd->argv = NULL;
+		return (-1);
+	}
+	parse_ret = parse_redirections(tokens, cmd);
+	return (finalize_simple_cmd(cmd, parse_ret));
 }
