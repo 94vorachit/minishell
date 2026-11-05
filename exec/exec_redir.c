@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:14:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:11:38 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,9 @@ void	set_output_file(t_cmd *cmd, char *value, int append)
 	cmd->append = append;
 }
 
+/**
+ * Parser stores delimiter text like EOF
+ */
 void	set_heredoc(t_cmd *cmd, char *value)
 {
 	if (cmd->heredoc)
@@ -58,6 +61,7 @@ void	set_heredoc(t_cmd *cmd, char *value)
  * `T_REDIR_IN` → input file
  * `T_REDIR_OUT` → output file with truncate
  * `T_APPEND` → output file with append
+ * `T_HEREDOC` → heredoc delimit
  * 
  * If some unexpected type appears, it frees the duplicated string safely
  * This function is a dispatcher.
