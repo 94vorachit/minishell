@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 15:07:20 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 14:14:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,13 @@ void	set_output_file(t_cmd *cmd, char *value, int append)
 	cmd->append = append;
 }
 
+void	set_heredoc(t_cmd *cmd, char *value)
+{
+	if (cmd->heredoc)
+		free(cmd->heredoc);
+	cmd->heredoc = value;
+}
+
 /**
  * Decides which field of t_cmd should receive the redirection
  * 
@@ -63,6 +70,8 @@ void	assign_redirection(t_cmd *cmd, t_token_type type, char *value)
 		set_output_file(cmd, value, 0);
 	else if (type == T_APPEND)
 		set_output_file(cmd, value, 1);
+	else if (type == T_HEREDOC)
+		set_heredoc(cmd, value);
 	else
 		free(value);
 }
