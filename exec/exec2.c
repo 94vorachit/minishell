@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/04 12:51:44 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 17:15:42 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
  */
 void	exec_external_child(t_cmd *cmd, char *exec_path, char **envp)
 {
-	if (cmd->infile && redirect_input(cmd) == -1)
+	if ((cmd->infile || cmd->heredoc_fd != -1) && redirect_input(cmd) == -1)
 		exit(1);
 	if (cmd->outfile && redirect_output(cmd) == -1)
 		exit(1);
@@ -74,6 +74,11 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 		return (SUCCESS);
 	if (cmd->argv[0][0] == '\0')
 		return (SUCCESS);
+	if (prepare_heredoc_list(cmd) == -1)
+	{
+		data->status = 130;
+		return (data->status);
+	}
 	if (is_builtin(cmd->argv[0]))
 		return (run_builtin_cmd(data, cmd));
 	return (run_external_cmd(data, cmd));

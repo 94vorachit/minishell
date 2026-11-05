@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:32:23 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/04 12:10:21 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:52:47 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ void	setup_child_io(t_cmd *cur, int prev_fd, int pipefd[2])
  */
 int	redirect_child_cmd(t_cmd *cur)
 {
-	if (cur->infile && redirect_input(cur) == -1)
+	if ((cur->infile || cur->heredoc_fd != -1) && redirect_input(cur) == -1)
 		return (-1);
 	if (cur->outfile && redirect_output(cur) == -1)
 		return (-1);

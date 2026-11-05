@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:29:47 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:44:38 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,6 +173,8 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 
 	cmd->infile = NULL;
 	cmd->outfile = NULL;
+	cmd->heredoc = NULL;
+	cmd->heredoc_fd = -1;
 	cmd->append = 0;
 	cmd->next = NULL;
 	cmd->argv = NULL;

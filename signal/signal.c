@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:06:00 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:36:13 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,7 +95,7 @@ void	sig_quit(int sig)
  *
  * 1. disables control-character display
  * 2. refreshes readline state
- * 3. exits with status `1`
+ * 3. exits with status `130`
  * 
  * This is used when a foreground program is interrupted and the shell should 
  * exit in a controlled way.
@@ -103,10 +103,10 @@ void	sig_quit(int sig)
 void	sig_interrupt(int sig)
 {
 	(void)sig;
-	sig_disabled_display();
-	rl_on_new_line();
-	rl_redisplay();
-	exit(1);
+	// sig_disabled_display();
+	// rl_on_new_line();
+	// rl_redisplay();
+	exit(130);
 }
 
 /**

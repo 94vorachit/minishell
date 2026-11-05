@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:45 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:41:55 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 17:24:52 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,5 +56,5 @@ void	sig_ignore(void)
 void	sig_heredoc(void)
 {
 	signal(SIGINT, sig_interrupt);
-	signal(SIGQUIT, sig_quit);
+	signal(SIGQUIT, SIG_IGN);
 }

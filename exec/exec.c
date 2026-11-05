@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:15:40 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 17:13:06 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ int	prepare_execution(t_data *data, t_cmd *cmd,
  */
 void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 {
-	if (cmd->infile && redirect_input(cmd) == -1)
+	if ((cmd->infile || cmd->heredoc_fd != -1) && redirect_input(cmd) == -1)
 	{
 		free(exec_path);
 		ft_free_split(envp);
@@ -173,6 +173,7 @@ int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 {
 	int	in_fd;
 	int	out_fd;
+	int	ret;
 
 	in_fd = dup(STDIN_FILENO);
 	out_fd = dup(STDOUT_FILENO);
@@ -186,7 +187,7 @@ int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 		data->status = ERROR;
 		return (ERROR);
 	}
-	if ((cmd->infile && redirect_input(cmd) == -1)
+	if (((cmd->infile || cmd->heredoc_fd != -1) && redirect_input(cmd) == -1)
 		|| (cmd->outfile && redirect_output(cmd) == -1))
 	{
 		dup2(in_fd, STDIN_FILENO);
@@ -196,10 +197,11 @@ int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 		data->status = ERROR;
 		return (ERROR);
 	}
+	ret = execute_builtin(data, cmd);
 	dup2(in_fd, STDIN_FILENO);
 	dup2(out_fd, STDOUT_FILENO);
 	close(in_fd);
 	close(out_fd);
-	data->status = execute_builtin(data, cmd);
-	return (data->status);
+	data->status = ret;
+	return (ret);
 }

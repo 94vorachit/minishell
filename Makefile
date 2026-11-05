@@ -8,7 +8,8 @@ SRC = $(wildcard src/*.c) \
 	$(wildcard expand/*.c) \
 	$(wildcard exec/*.c) \
 	$(wildcard builtin/*.c) \
-	$(wildcard pipe/*.c)
+	$(wildcard pipe/*.c) \
+	$(wildcard heredoc/*.c)
 	
 OBJ = $(SRC:.c=.o)
 LDLIBS = -lreadline

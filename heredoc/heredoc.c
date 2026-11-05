@@ -6,13 +6,13 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 14:18:47 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:09:09 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 17:21:10 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
-int	write_heredoc_to_pipe(const char *delim, int fd)
+int	write_heredoc_to_pipe(char *delim, int fd)
 {
 	char	*line;
 
@@ -73,17 +73,23 @@ int	prepare_heredoc_cmd(t_cmd *cmd)
 		return (0);
 	if (pipe(pipefd) < 0)
 		return (-1);
+	sig_ignore();
 	pid = fork();
 	if (pid < 0)
 	{
 		close(pipefd[0]);
 		close(pipefd[1]);
+		sig_init();
 		return (-1);
 	}
 	if (pid == 0)
 		run_heredoc_child(cmd, pipefd);
 	if (wait_heredoc_child(pid, pipefd) < 0)
+	{
+		sig_init();
 		return (-1);
+	}
+	sig_init();
 	cmd->heredoc_fd = pipefd[0];
 	return (0);
 }

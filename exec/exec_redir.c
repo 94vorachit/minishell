@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:11:38 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 16:58:31 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,8 +103,6 @@ int	set_redirection(t_cmd *cmd, t_token *token)
 
 	if (!token->next || token->next->type != T_WORD)
 		return (-1);
-	if (token->type == T_HEREDOC)
-		return (0);
 	value = ft_strdup(token->next->value);
 	if (!value)
 		return (-1);
