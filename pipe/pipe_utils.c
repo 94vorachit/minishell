@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:15:04 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 16:49:29 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 14:00:34 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,7 @@ int	add_pipeline_segment(t_token *start, t_token *pipe_pos, t_cmd **head)
 		return (-1);
 	if (build_simple_cmd(start, new_cmd) == -1)
 	{
+		ft_free_cmd(new_cmd);
 		free(new_cmd);
 		return (-1);
 	}

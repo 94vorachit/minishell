@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/04 12:56:06 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 13:49:43 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,41 +156,35 @@ int	main(int ac, char **av, char **env)
 			free(line);
 			continue ;
 		}
+		add_history(line);
 		if (lexer(line, &data->tokens) == 0)
 		{
 			if (ft_validate_syntax(data->tokens) == SUCCESS)
 			{
 				if (expand_tokens(data, &data->tokens) == -1)
 					data->status = ERROR;
+				else if (ft_has_pipe(data->tokens))
+				{
+					t_cmd	*cmds;
+
+					cmds = NULL;
+					if (build_pipeline_cmds(data->tokens, &cmds) == 0)
+						data->status = execute_pipeline(data, cmds);
+					else
+						data->status = SYNTAX_ERROR;
+					ft_free_cmd_list(&cmds);
+				}
 				else
 				{
-					if (ft_has_pipe(data->tokens))
-					{
-						t_cmd	*cmds;
-
-						cmds = NULL;
-						if (build_pipeline_cmds(data->tokens, &cmds) == 0)
-							data->status = execute_pipeline(data, cmds);
-						else
-							data->status = 2;
-						ft_free_cmd_list(&cmds);
-					}
+					if (build_simple_cmd(data->tokens, &cmd) == 0)
+						data->status = execute_simple_cmd(data, &cmd);
 					else
-					{
-						if (build_simple_cmd(data->tokens, &cmd) == 0)
-							data->status = execute_simple_cmd(data, &cmd);
-						else
-							data->status = 2;
-						ft_free_cmd(&cmd);
-					}
-					add_history(line);
+						data->status = SYNTAX_ERROR;
+					ft_free_cmd(&cmd);
 				}
 			}
 			else
-			{
 				data->status = SYNTAX_ERROR;
-				exit(SYNTAX_ERROR);
-			}
 		}
 		else
 			data->status = SYNTAX_ERROR;

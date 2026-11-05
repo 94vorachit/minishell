@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 14:15:20 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 13:56:39 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,18 +160,23 @@ int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 	cmd->outfile = NULL;
 	cmd->append = 0;
 	cmd->next = NULL;
+	cmd->argv = NULL;
+
 	argc = count_args(tokens);
 	cmd->argv = malloc(sizeof(char *) * (argc + 1));
 	if (!cmd->argv)
 		return (-1);
+		
 	if (fill_argv(tokens, cmd) == -1)
 	{
 		ft_free_split(cmd->argv);
+		cmd->argv = NULL;
 		return (-1);
 	}
 	if (parse_redirections(tokens, cmd) == -1)
 	{
 		ft_free_split(cmd->argv);
+		cmd->argv = NULL;
 		return (-1);
 	}
 	return (0);

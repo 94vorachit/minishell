@@ -1,0 +1,249 @@
+I’ll inspect your current execution and parsing files first so I can give you the exact next step with code that matches your project structure, then I’ll explain how each part works.
+
+I’m gathering the current implementation state in `main`, exec, token, and headers so the guidance is concrete and not generic.
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/includes/minishell.h)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/src/main.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec.c)
+
+I found that your loop and execution already exist, so next I’m checking redirection parsing and pipeline execution to pinpoint what is still missing or risky.
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec2.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec_redir.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec_utils.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/exec/exec_utils2.c)
+
+I confirmed redirection code exists; now I’m checking pipeline and parser integration to identify the true next implementation gap and any blocking bugs.
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/pipe/pipe.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/pipe/pipe_utils.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/pipe/pipe_utils2.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/syntax.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/token_types.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/builtin/builtin.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/lexer.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/token_utils.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/token/token_utils2.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/signal/signal.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/signal/signal2.c)
+
+I have enough context to guide implementation; I’ll quickly check for current compile/lint errors so the next step includes the exact fixes that unblock you first.
+
+Checked workspace, no problems found
+
+Best next step is a stabilization pass before heredoc: keep the shell alive on syntax errors, fix fd restore paths for builtins, and remove double-free risks during command build.  
+You already have lexer, expansion, redirection, and pipeline basics implemented.
+
+Apply these changes first in this order:
+
+1. Fix main loop control flow in main.c
+2. Fix builtin redirection restore logic in exec.c
+3. Fix command build cleanup in exec_utils2.c
+4. Fix pipeline segment cleanup in pipe_utils.c
+
+Code to apply:
+
+1) Main loop: do not exit shell on syntax error, and add history for non-empty lines
+
+In main.c, update the while loop behavior to this pattern:
+
+    while (1)
+    {
+        line = readline("minishell > ");
+        if (!line)
+        {
+            ft_putstr_fd("exit\n", STDERR);
+            free_shell(data);
+            return (SUCCESS);
+        }
+
+        if (g_signal == SIGINT)
+        {
+            data->status = 130;
+            g_signal = 0;
+        }
+
+        if (line[0] == '\0')
+        {
+            free(line);
+            continue ;
+        }
+
+        add_history(line);
+
+        if (lexer(line, &data->tokens) == 0)
+        {
+            if (ft_validate_syntax(data->tokens) == SUCCESS)
+            {
+                if (expand_tokens(data, &data->tokens) == -1)
+                    data->status = ERROR;
+                else if (ft_has_pipe(data->tokens))
+                {
+                    t_cmd *cmds;
+
+                    cmds = NULL;
+                    if (build_pipeline_cmds(data->tokens, &cmds) == 0)
+                        data->status = execute_pipeline(data, cmds);
+                    else
+                        data->status = SYNTAX_ERROR;
+                    ft_free_cmd_list(&cmds);
+                }
+                else
+                {
+                    if (build_simple_cmd(data->tokens, &cmd) == 0)
+                        data->status = execute_simple_cmd(data, &cmd);
+                    else
+                        data->status = SYNTAX_ERROR;
+                    ft_free_cmd(&cmd);
+                }
+            }
+            else
+                data->status = SYNTAX_ERROR;
+        }
+        else
+            data->status = SYNTAX_ERROR;
+
+        ft_token_clear(&data->tokens);
+        free(line);
+    }
+
+Why this matters:
+- Syntax error should set status and continue, not terminate minishell.
+- History should be saved for non-empty input even if execution fails.
+- Ctrl+C at prompt should produce status 130.
+
+2) Builtin execution with redirections: always restore stdin/stdout
+
+In exec.c, replace run_builtin_cmd with:
+
+    int run_builtin_cmd(t_data *data, t_cmd *cmd)
+    {
+        int in_fd;
+        int out_fd;
+        int ret;
+
+        in_fd = dup(STDIN_FILENO);
+        out_fd = dup(STDOUT_FILENO);
+        if (in_fd < 0 || out_fd < 0)
+        {
+            if (in_fd >= 0)
+                close(in_fd);
+            if (out_fd >= 0)
+                close(out_fd);
+            perror("dup");
+            data->status = ERROR;
+            return (ERROR);
+        }
+
+        if ((cmd->infile && redirect_input(cmd) == -1)
+            || (cmd->outfile && redirect_output(cmd) == -1))
+        {
+            dup2(in_fd, STDIN_FILENO);
+            dup2(out_fd, STDOUT_FILENO);
+            close(in_fd);
+            close(out_fd);
+            data->status = ERROR;
+            return (ERROR);
+        }
+
+        ret = execute_builtin(data, cmd);
+
+        dup2(in_fd, STDIN_FILENO);
+        dup2(out_fd, STDOUT_FILENO);
+        close(in_fd);
+        close(out_fd);
+
+        data->status = ret;
+        return (ret);
+    }
+
+Why this matters:
+- Failed redirection should not leave shell stdout/stdin broken.
+- You avoid fd leaks and prompt corruption.
+
+3) Avoid double free when build_simple_cmd fails
+
+In exec_utils2.c, adjust failure paths in build_simple_cmd:
+
+    int build_simple_cmd(t_token *tokens, t_cmd *cmd)
+    {
+        int argc;
+
+        cmd->infile = NULL;
+        cmd->outfile = NULL;
+        cmd->append = 0;
+        cmd->next = NULL;
+        cmd->argv = NULL;
+
+        argc = count_args(tokens);
+        cmd->argv = malloc(sizeof(char *) * (argc + 1));
+        if (!cmd->argv)
+            return (-1);
+
+        if (fill_argv(tokens, cmd) == -1)
+        {
+            ft_free_split(cmd->argv);
+            cmd->argv = NULL;
+            return (-1);
+        }
+        if (parse_redirections(tokens, cmd) == -1)
+        {
+            ft_free_split(cmd->argv);
+            cmd->argv = NULL;
+            return (-1);
+        }
+        return (0);
+    }
+
+Why this matters:
+- Caller later runs ft_free_cmd on the same struct.
+- Nulling argv prevents double free crashes.
+
+4) Free partially-built pipeline command safely
+
+In pipe_utils.c, update add_pipeline_segment failure block:
+
+    if (build_simple_cmd(start, new_cmd) == -1)
+    {
+        ft_free_cmd(new_cmd);
+        free(new_cmd);
+        return (-1);
+    }
+
+Why this matters:
+- If build_simple_cmd partially allocated internals, you clean them correctly.
+
+How the flow works after these fixes:
+
+1. Read line
+2. Tokenize
+3. Validate syntax
+4. Expand variables
+5. Build command node(s)
+6. Apply redirections only inside execution path
+7. Execute builtin or external
+8. Wait children and map exit status
+9. Clean per-loop allocations
+
+After this stabilization, your true next feature step is heredoc implementation.
+
+If you want, I can give you the exact heredoc implementation skeleton next, with these functions:
+1. parse_heredoc and delimiter storage
+2. heredoc_child_reader using readline
+3. pipe-based heredoc fd hookup before command execution
+4. signal-safe heredoc status handling (Ctrl+C -> 130)
