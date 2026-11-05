@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:37:26 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,18 +169,6 @@ int	redirect_output(t_cmd *cmd)
 	return (0);
 }
 
-/**
- * Builds one command structure from the token list.
- *
- * Flow:
- * 1. Zero-initialize `cmd`
- * 2. Call `parse_redirections(tokens, cmd)` to store redirection files
- * 3. Count args with `count_args`
- * 4. Allocate `argv`
- * 5. Fill `argv` with `fill_argv`
- *
- * This is the main parser for a single command.
- */
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 {
 	int	argc;

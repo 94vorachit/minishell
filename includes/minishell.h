@@ -152,6 +152,7 @@ int		redirect_input(t_cmd *cmd);
 int		redirect_output(t_cmd *cmd);
 int		parse_redirections(t_token *tokens, t_cmd *cmd);
 int		build_simple_cmd(t_token *tokens, t_cmd *cmd);
+// void	assign_redirection(t_cmd *cmd, t_token_type type, char *value);
 
 int		build_pipeline_cmds(t_token *tokens, t_cmd **head);
 int		ft_has_pipe(t_token *tokens);

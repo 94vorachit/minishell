@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:18:49 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:34:42 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,102 +78,4 @@ void	assign_redirection(t_cmd *cmd, t_token_type type, char *value)
 		set_heredoc(cmd, value);
 	else
 		free(value);
-}
-
-/**
- * This is the logic that converts a token like:
- * * < file
- * * > file
- * * >> file
- * into the shell command structure.
- * 
- * What it does:
- * 1. checks that the redirection has a filename after it
- * 2. rejects invalid syntax like >, >>, or < without a following word
- * 3. ignores heredoc here (T_HEREDOC) by returning 0
- * 4. duplicates the filename
- * 5. stores it in the command structure with assign_redirection
- * 
- * If something fails:
- * * returns -1
- */
-int	set_redirection(t_cmd *cmd, t_token *token)
-{
-	char	*value;
-	int	fd;
-
-	if (!token->next || token->next->type != T_WORD)
-		return (-1);
-	value = ft_strdup(token->next->value);
-	if (!value)
-		return (-1);
-	if (token->type == T_REDIR_OUT || token->type == T_APPEND)
-	{
-		if (token->type == T_APPEND)
-			fd = open(value, O_WRONLY | O_CREAT | O_APPEND, 0644);
-		else
-			fd = open(value, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		if (fd < 0)
-		{
-			if (errno == ENOENT)
-			{
-				ft_putstr_fd("minishell: no such file or directory: ", STDERR);
-				ft_putstr_fd(value, STDERR);
-				ft_putstr_fd("\n", STDERR);
-			}
-			else
-				perror(value);
-			free(value);
-			return (ERROR);
-		}
-		close(fd);
-	}
-	assign_redirection(cmd, token->type, value);
-	return (0);
-}
-
-/**
- * This is the main parser for redirections in a single command.
- * 
- * How it works:
- * * walks through the token list
- * * when it sees a redirection token (<, >, >>, ...), it calls set_redirection
- * * if parsing fails, it returns -1
- * * if redirection is found, it skips the filename token because the filename 
- * is not part of the command arguments
- */
-int	parse_redirections(t_token *tokens, t_cmd *cmd)
-{
-	t_token	*cur;
-	char	*value;
-	int	ret;
-
-	cur = tokens;
-	while (cur && cur->type != T_PIPE)
-	{
-		if (ft_isredirection(cur->type))
-		{
-			if (!cur->next || cur->next->type != T_WORD)
-				return (-1);
-			if (cur->type == T_REDIR_IN)
-			{
-				value = ft_strdup(cur->next->value);
-				if (!value)
-					return (-1);
-				if (access(value, F_OK) != 0)
-				{
-					free(cmd->infile);
-					cmd->infile = value;
-					return (SUCCESS);
-				}
-				free(value);
-			}
-			ret = set_redirection(cmd, cur);
-			if (ret != 0)
-				return (ret);
-			cur = cur->next;
-		}
-		cur = cur->next;
-	}
-	return (SUCCESS);
 }
