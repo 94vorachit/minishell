@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 14:01:09 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/05 14:15:40 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,18 +186,16 @@ int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 		data->status = ERROR;
 		return (ERROR);
 	}
-	
 	if ((cmd->infile && redirect_input(cmd) == -1)
 		|| (cmd->outfile && redirect_output(cmd) == -1))
 	{
-        dup2(in_fd, STDIN_FILENO);
-        dup2(out_fd, STDOUT_FILENO);
-        close(in_fd);
-        close(out_fd);
-        data->status = ERROR;
-        return (ERROR);
-    }
-	
+		dup2(in_fd, STDIN_FILENO);
+		dup2(out_fd, STDOUT_FILENO);
+		close(in_fd);
+		close(out_fd);
+		data->status = ERROR;
+		return (ERROR);
+	}
 	dup2(in_fd, STDIN_FILENO);
 	dup2(out_fd, STDOUT_FILENO);
 	close(in_fd);
