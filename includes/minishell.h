@@ -53,6 +53,7 @@ typedef struct s_cmd
     char	*infile;
     char	*outfile;
 	char	*heredoc;
+	int		heredoc_fd;
     int		append;
 	struct s_cmd	*next;
 }	t_cmd;
@@ -178,5 +179,8 @@ int		builtin_export(t_data *data, t_cmd *cmd);
 int		builtin_unset(t_data *data, t_cmd *cmd);
 int		builtin_env(t_data *data, t_cmd *cmd);
 int		builtin_exit(t_data *data, t_cmd *cmd);
+
+int		prepare_heredoc_cmd(t_cmd *cmd);
+int		prepare_heredoc_list(t_cmd *cmds);
 
 #endif
