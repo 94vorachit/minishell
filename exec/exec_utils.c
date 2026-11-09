@@ -6,14 +6,21 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 01:46:38 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:47:04 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:56:40 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Releases all dynamically allocated memory owned by a command.
+ * Purpose: free all memory inside one `t_cmd`.
+ * 
+ * How it works:
+ * 1. frees each `argv` string
+ * 2. frees `argv`
+ * 3. frees `infile`, `outfile`, `heredoc`
+ * 4. closes heredoc fd if open
+ * 5. resets members to safe defaults
  * 
  * Frees argv : For example:
  * argv
@@ -57,6 +64,14 @@ void	ft_free_cmd(t_cmd *cmd)
 	cmd->append = 0;
 }
 
+/**
+ * Purpose: free a whole linked list of commands.
+ * 
+ * How it works:
+ * 1. iterate over list
+ * 2. call `ft_free_cmd` on each node
+ * 3. free the node itself
+ */
 void	ft_free_cmd_list(t_cmd **cmds)
 {
 	t_cmd	*cur;
@@ -76,7 +91,11 @@ void	ft_free_cmd_list(t_cmd **cmds)
 }
 
 /** 
- * Counts the number of nodes in the shell environment linked list.
+ * Purpose: count environment variables.
+ * 
+ * How it works:
+ * 1. walks linked list
+ * 2. increments count until `NULL`
  * 
  * The environment is stored as a linked list:
  * env
@@ -101,8 +120,12 @@ int	ft_count_env(t_env *env)
 }
 
 /**
- * Copies the environment linked list into a NULL-terminated 
- * array of strings.
+ * Purpose: copy environment linked list into array.
+ * 
+ * How it works:
+ * 1. duplicates each `env->value`
+ * 2. stores into `char **arr`
+ * 3. appends terminating `NULL`
  * 
  * If fails:
  * 1. Frees all previously copied strings.
@@ -132,10 +155,14 @@ int	ft_copy_env(char **arr, t_env *env)
 }
 
 /**
- * Converts the shell's linked-list environment into the format 
- * required by `execve()`.
+ * Purpose: convert env linked list to `execve()` format.
  * 
  * `execve()` expects: `char *const envp[]`
+ * 
+ * How it works:
+ * 1. allocate array with size `count + 1`
+ * 2. fill with environment strings
+ * 3. return `NULL`-terminated array
  * 
  * which is effectively a NULL-terminated char ** array:
  * 
