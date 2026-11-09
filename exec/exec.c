@@ -6,23 +6,20 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 17:00:30 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:20:15 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Runs the actual command in the child process.
+ * Purpose: actual child process logic for a command.
  * 
- * Behavior:
- * 1. If `cmd->infile` exists, call `redirect_input`
- * 2. If `cmd->outfile` exists, call `redirect_output`
- * 3. Then run:
- * `execve(exec_path, cmd->argv, envp)`
- * 4. If `execve` fails, print `perror("execve")` and exit with `127`
- * 
- * This is where the process actually becomes the target command.
+ * How it works:
+ * 1. if there is input redirection, call `redirect_input`
+ * 2. if there is output redirection, call `redirect_output`
+ * 3. then `execve` runs the real program
+ * 4. on failure, exits with 126
  */
 void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 {
@@ -46,17 +43,15 @@ void	run_child(t_cmd *cmd, char *exec_path, char **envp)
 }
 
 /**
- * Converts the child exit status into the shell status.
+ * Purpose: convert raw wait status into shell status.
  * 
- * The exit status is converted from `waitpid` using the normal shell rule:
- * - `Ctrl+C` -> 130
- * - `Ctrl+\` -> 131
- *
- * Behavior:
- * * If child exited normally:
- * `data->status = WEXITSTATUS(status)`
- * * Else if it was terminated by a signal:
- * `data->status = 128 + WTERMSIG(status)`
+ * How it works:
+ * 1. if process exited normally: use `WEXITSTATUS`
+ * 2. if terminated by signal:
+ * * `SIGINT` -> 130
+ * * `SIGQUIT` -> 131
+ * * others -> `128 + signal`
+ * 3. stores result in `data->status`
  */
 void	set_child_status(t_data *data, int status)
 {
@@ -82,16 +77,14 @@ void	set_child_status(t_data *data, int status)
 }
 
 /**
- * Forks and waits for the command.
+ * Purpose: generic process runner used for external command execution flow.
  * 
- * Flow:
+ * How it works:
  * 1. `fork()`
- * 2. Child: `run_child(...)`
- * 3. Parent: `waitpid(pid, &status, 0)`
- * 4. Free memory
- * 5. Call `set_child_status(...)`
- * 
- * This is the execution wrapper around the child.
+ * 2. child runs `run_child`
+ * 3. parent waits
+ * 4. frees memory
+ * 5. stores shell status via `set_child_status`
  */
 int	run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp)
 {

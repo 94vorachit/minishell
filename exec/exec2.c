@@ -6,28 +6,23 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 16:54:31 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:15:54 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Prepares everything before `fork()`.
+ * Purpose: resolve the real path of the command and build `envp`.
  * 
- * 1. Finds the executable path with `find_executable_path(...)`
- * 2. Prints:
- * `minishell: command not found: <name>` 
- * when no executable is found
- * 3. Saves exit status as `127`
- * 4. Builds environment array with `env_to_char_array(...)`
- * 
- * Returns:
- * * `0` on success
- * * `-1` on error
+ * How it works:
+ * 1. `find_executable_path(data->env, cmd->argv[0])`
+ * 2. if not found, prints:
+ * * `command not found`
+ * * or `no such file or directory`
+ * 3. calls `env_to_char_array(data->env)` to convert environment into `char **`
  */
-int	prepare_execution(t_data *data, t_cmd *cmd,
-				char **exec_path, char ***envp)
+int	prepare_execution(t_data *data, t_cmd *cmd, char **exec_path, char ***envp)
 {
 	*exec_path = find_executable_path(data->env, cmd->argv[0]);
 	if (!*exec_path)
@@ -52,7 +47,12 @@ int	prepare_execution(t_data *data, t_cmd *cmd,
 }
 
 /**
- * Runs the external command in the child and exits with the proper status.
+ * Purpose: child process body for external commands.
+ * 
+ * How it works:
+ * 1. applies input/output redirection
+ * 2. calls `execve(exec_path, cmd->argv, envp)`
+ * 3. if `execve` fails, prints error and exits with code 126
  */
 void	exec_external_child(t_cmd *cmd, char *exec_path, char **envp)
 {
@@ -66,7 +66,14 @@ void	exec_external_child(t_cmd *cmd, char *exec_path, char **envp)
 }
 
 /**
- * Executes an external command and waits for it to finish.
+ * Purpose: execute a non-builtin command.
+ * 
+ * How it works:
+ * 1. calls `prepare_execution`
+ * 2. forks a child process
+ * 3. in child: calls `exec_external_child`
+ * 4. parent waits with `waitpid`
+ * 5. converts child status with `set_child_status`
  */
 int	run_external_cmd(t_data *data, t_cmd *cmd)
 {
@@ -93,7 +100,13 @@ int	run_external_cmd(t_data *data, t_cmd *cmd)
 }
 
 /**
- * Entry point for one shell command.
+ * Purpose: top-level entry for one command.
+ * 
+ * How it works:
+ * 1. checks if command is valid
+ * 2. runs heredoc preparation
+ * 3. if command name is a builtin, calls `run_builtin_cmd`
+ * 4. otherwise calls `run_external_cmd`
  */
 int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 {

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 17:00:32 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 17:01:22 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:21:43 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,14 @@ static void	restore_std_fds(int in_fd, int out_fd)
 }
 
 /**
- * Executes a built-in command with a temporary dup of stdin/stdout.
+ * Purpose: run shell built-ins safely with redirection.
+ * 
+ * How it works:
+ * 1. duplicate original stdin/stdout
+ * 2. apply input/output redirection if needed
+ * 3. call `execute_builtin(data, cmd)`
+ * 4. restore original stdio
+ * 5. return built-in result
  */
 int	run_builtin_cmd(t_data *data, t_cmd *cmd)
 {
