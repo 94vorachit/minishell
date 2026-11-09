@@ -1,0 +1,20 @@
+Overall execution example
+For a command like:
+
+cat < input.txt > output.txt
+
+The flow is:
+
+token parser builds a t_cmd
+build_simple_cmd fills:
+argv[0] = "cat"
+argv[1] = NULL
+parse_redirections sets:
+cmd->infile = "input.txt"
+cmd->outfile = "output.txt"
+run_external_cmd does:
+fork()
+child calls redirect_input then redirect_output
+execve("/bin/cat", argv, envp)
+That is the basic logic of the whole exec module.
+
