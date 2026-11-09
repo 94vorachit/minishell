@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:36:13 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 21:54:29 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,6 @@ void	sig_disabled_display(void)
 void	sig_reprompt(int sig)
 {
 	(void)sig;
-	sig_disabled_display();
 	g_signal = SIGINT;
 	write(1, "\n", 1);
 	rl_on_new_line();
@@ -121,6 +120,7 @@ void	sig_interrupt(int sig)
  */
 void	sig_init(void)
 {
+	sig_disabled_display();
 	signal(SIGINT, sig_reprompt);
-	signal(SIGQUIT, sig_quit);
+	signal(SIGQUIT, SIG_IGN);
 }
