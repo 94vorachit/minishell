@@ -1,0 +1,101 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   exec_redir3.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/11/09 16:24:05 by vorhansa          #+#    #+#             */
+/*   Updated: 2026/11/09 16:24:50 by vorhansa         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/minishell.h"
+
+/**
+ * Replaces stdin with the file from `cmd->infile`.
+ *
+ * Behavior:
+ * 1. Opens the file with `open(..., O_RDONLY)`
+ * 2. If fail: prints `perror(...)`
+ * 3. Uses `dup2(fd, STDIN_FILENO)`
+ * 4. Closes the file descriptor
+ */
+int	redirect_file(char *infile)
+{
+	int	fd;
+
+	fd = open(infile, O_RDONLY);
+	if (fd < 0)
+	{
+		if (errno == ENOENT)
+		{
+			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+			ft_putstr_fd(infile, STDERR);
+			ft_putstr_fd("\n", STDERR);
+		}
+		else
+			perror(infile);
+		return (-1);
+	}
+	if (dup2(fd, STDIN_FILENO) < 0)
+	{
+		perror("dup2");
+		close(fd);
+		return (-1);
+	}
+	close(fd);
+	return (0);
+}
+
+int	redirect_input(t_cmd *cmd)
+{
+	if (cmd->heredoc_fd != -1)
+	{
+		if (dup2(cmd->heredoc_fd, STDIN_FILENO) < 0)
+		{
+			perror("dup2");
+			return (-1);
+		}
+		close(cmd->heredoc_fd);
+		cmd->heredoc_fd = -1;
+		return (0);
+	}
+	return (redirect_file(cmd->infile));
+}
+
+int	open_output_file(t_cmd *cmd)
+{
+	if (cmd->append)
+		return (open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644));
+	return (open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644));
+}
+
+int	redirect_output(t_cmd *cmd)
+{
+	int	fd;
+
+	if (!cmd->outfile)
+		return (0);
+	fd = open_output_file(cmd);
+	if (fd < 0)
+	{
+		if (errno == ENOENT)
+		{
+			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+			ft_putstr_fd(cmd->outfile, STDERR);
+			ft_putstr_fd("\n", STDERR);
+		}
+		else
+			perror(cmd->outfile);
+		return (-1);
+	}
+	if (dup2(fd, STDOUT_FILENO) < 0)
+	{
+		perror("dup2");
+		close(fd);
+		return (-1);
+	}
+	close(fd);
+	return (0);
+}
