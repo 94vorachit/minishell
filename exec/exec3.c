@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 17:00:32 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 17:21:43 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 19:45:05 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
  * Saves original stdin/stdout so built-ins can be run with 
  * temporary redirection.
  */
-static int	backup_std_fds(int *in_fd, int *out_fd)
+int	backup_std_fds(int *in_fd, int *out_fd)
 {
 	*in_fd = dup(STDIN_FILENO);
 	*out_fd = dup(STDOUT_FILENO);
@@ -35,7 +35,7 @@ static int	backup_std_fds(int *in_fd, int *out_fd)
 /**
  * Restores stdin/stdout after the built-in command has finished.
  */
-static void	restore_std_fds(int in_fd, int out_fd)
+void	restore_std_fds(int in_fd, int out_fd)
 {
 	dup2(in_fd, STDIN_FILENO);
 	dup2(out_fd, STDOUT_FILENO);
