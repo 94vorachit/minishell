@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:45:58 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:53:51 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 20:06:08 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,16 +74,6 @@ void	wait_pipeline_children(t_data *data, pid_t *pids, int count)
 	while (i < count)
 	{
 		waitpid(pids[i], &status, 0);
-		// while (waitpid(pids[i], &status, 0) == -1)
-		// {
-		// 	if (errno != EINTR)
-		// 	{
-		// 		perror("waitpid");
-		// 		data->status = 1;
-		// 		sig_init();
-		// 		return ;
-		// 	}
-		// }
 		set_child_status(data, status);
 		i++;
 	}
@@ -128,3 +118,31 @@ int	execute_pipeline(t_data *data, t_cmd *cmd)
 	free(pids);
 	return (data->status);
 }
+
+/**
+ * void	wait_pipeline_children(t_data *data, pid_t *pids, int count)
+{
+	int	i;
+	int	status;
+
+	sig_ignore();
+	i = 0;
+	while (i < count)
+	{
+		// waitpid(pids[i], &status, 0);
+		while (waitpid(pids[i], &status, 0) == -1)
+		{
+			if (errno != EINTR)
+			{
+				perror("waitpid");
+				data->status = 1;
+				sig_init();
+				return ;
+			}
+		}
+		set_child_status(data, status);
+		i++;
+	}
+	sig_init();
+}
+ */

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:32:23 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 16:52:47 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 20:03:40 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,11 +113,11 @@ void	update_parent_pipe(int *prev_fd, t_cmd *cur, int pipefd[2])
  * 4. else:
  * * find executable path
  * * build envp
- * * if path or env is missing, exit with 127
+ * * if path or env is missing, exit with 126
  * 5. execve(path, cur->argv, envp);
  * 6. if execve fails:
  * * print perror("execve")
- * * exit with 127
+ * * exit with 126
  * 
  * This function is the child process execution step for 
  * each pipeline command.
