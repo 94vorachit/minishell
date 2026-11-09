@@ -1,0 +1,20 @@
+## Overall flow
+
+The full heredoc lifecycle is:
+
+1. parser stores heredoc delimiter in `cmd->heredoc`
+2. `prepare_heredoc_list()` runs for command list
+3. `prepare_heredoc_cmd()` creates a pipe
+4. child reads input until delimiter
+5. data is written into the pipe
+6. parent stores pipe read end in `cmd->heredoc_fd`
+7. later execution replaces stdin with that pipe
+
+So the shell effectively turns heredoc content into a temporary input stream that the command can read as if it were from a file.
+
+If you want, I can also explain the heredoc logic with a concrete example like:
+- `cat << END`
+- `hello`
+- `END`
+
+and show exactly how the pipe and fd work step by step.

@@ -184,5 +184,6 @@ int		builtin_exit(t_data *data, t_cmd *cmd);
 
 int		prepare_heredoc_cmd(t_cmd *cmd);
 int		prepare_heredoc_list(t_cmd *cmds);
+int		write_heredoc_to_pipe(char *delim, int fd);
 
 #endif
