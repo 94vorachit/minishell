@@ -6,21 +6,21 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 16:26:45 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 18:42:00 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Counts how many `T_WORD` tokens appear before a pipe.
+ * Purpose: count command arguments before a pipe.
  *
  * Needed to allocate the correct size for `cmd->argv`.
  *
- * Behavior:
- * * Walks the token list until `T_PIPE`
- * * Increments `argc` for every word
- * * If the current token is a redirection, skips its operand token too
+ * How it works:
+ * 1. scans tokens
+ * 2. counts only `T_WORD`
+ * 3. skips redirection operand token
  */
 int	count_args(t_token *tokens)
 {
@@ -41,14 +41,13 @@ int	count_args(t_token *tokens)
 }
 
 /**
- * Fills cmd->argv with the actual command arguments.
+ * Purpose: Fills `cmd->argv` with the actual command arguments.
  *
- * Behavior:
- * * Iterates tokens again
- * * For each T_WORD, duplicates the token value into cmd->argv[i]
- * * Adds a final NULL at the end
- * * If a redirection is found, skips the next token because that token
- * is file name, not command arg
+ * How it works:
+ * 1. iterate tokens
+ * 2. copy each word into array
+ * 3. skip file names after redirections
+ * 4. add `NULL` sentinel at end
  */
 int	fill_argv(t_token *tokens, t_cmd *cmd)
 {
@@ -74,6 +73,14 @@ int	fill_argv(t_token *tokens, t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Purpose: initialize a command structure.
+ * 
+ * How it works:
+ * 1. set `infile`, `outfile`, `heredoc`, and `argv` to `NULL`
+ * 2. set fd values to `-1`
+ * 3. reset flags
+ */
 int	init_simple_cmd(t_cmd *cmd)
 {
 	cmd->infile = NULL;
@@ -86,6 +93,13 @@ int	init_simple_cmd(t_cmd *cmd)
 	return (0);
 }
 
+/**
+ * Purpose: handle parse result from redirection analysis.
+ * 
+ * How it works:
+ * 1. if parse failed, free `argv`
+ * 2. return error code
+ */
 int	finalize_simple_cmd(t_cmd *cmd, int parse_ret)
 {
 	if (parse_ret == -1)
@@ -103,6 +117,17 @@ int	finalize_simple_cmd(t_cmd *cmd, int parse_ret)
 	return (0);
 }
 
+/**
+ * Purpose: construct a full command from tokens.
+ * 
+ * How it works:
+ * 1. initialize command
+ * 2. count args
+ * 3. allocate `argv`
+ * 4. fill arguments
+ * 5. parse redirections
+ * 6. finalize result
+ */
 int	build_simple_cmd(t_token *tokens, t_cmd *cmd)
 {
 	int	argc;
