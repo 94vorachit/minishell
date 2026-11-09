@@ -6,15 +6,15 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 18:57:50 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 19:08:31 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 19:31:26 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /*
- * Checks whether a character can start a variable name.
- 
+ * Purpose: Checks whether a character can start a variable name.
+ *
  * It accepts:
  * * letters: `a-z`, `A-Z`
  * * underscore: `_`
@@ -58,7 +58,7 @@ int	is_var_name_char(char c)
 }
 
 /**
- * Appends a string to the current result buffer.
+ * Purpose: Appends a string to the current result buffer.
  * 
  * It does:
  * 1. ignore empty input

@@ -1,0 +1,277 @@
+Read [](file:///home/vorhansa/Documents/my_github/minishell/expand/expand2.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/expand/expand.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/expand/expand_utils.c)
+
+Read [](file:///home/vorhansa/Documents/my_github/minishell/expand/expand_utils2.c)
+
+## Expand directory: function-by-function explanation
+
+The expansion logic is mostly about turning a shell word like `$USER`, `$?`, or `"hello $HOME"` into its final expanded string before execution. The main flow is:
+
+expand.c -> expand2.c -> expand_utils.c -> expand_utils2.c
+
+---
+
+## 1) Main expansion flow
+
+### `expand_tokens`
+File: expand2.c
+
+- Walks the whole token list.
+- Calls `expand_current_word` for each token.
+- Keeps track of previous and current token pointers.
+- If a token becomes empty and unquoted, removes it from the list.
+
+How it works:
+- start at first token
+- for each token:
+  - if token is `T_WORD`, expand it
+  - if result is empty and no quotes were in original word, delete it
+  - otherwise keep it and continue
+
+---
+
+### `expand_current_word`
+File: expand2.c
+
+- Expands one token only.
+- Uses `expand_word(data, token->value)`.
+- If expanded string is empty and the original word had no quotes, it removes the token from the list.
+
+Why it matters:
+- this handles shell behavior like:
+  - `$EMPTY` becomes empty
+  - but quoted empty strings must stay
+
+---
+
+### `expand_word`
+File: expand.c
+
+- Expands the contents of one word string.
+- Loops character by character.
+- Uses a state machine with:
+  - `in_single`
+  - `in_double`
+  - current index `i`
+  - result buffer
+
+How it works:
+- start with empty string
+- process each character
+- if char is `$` and not inside single quotes, call `handle_dollar`
+- otherwise append the char literally
+- at the end, return expanded final string
+
+---
+
+## 2) Dollar handling
+
+### `handle_dollar`
+File: expand.c
+
+This is the main decision function when a `$` is found.
+
+Cases:
+- `$` at end of string: keep `$` literally
+- `$?`: expand last exit status
+- `$NAME`: expand environment variable
+- anything else: keep `$` literally
+
+Example:
+- input: `$USER` -> `alice`
+- input: `$?` -> `0` or `1`
+- input: `$` -> `$`
+
+---
+
+### `expand_env_var`
+File: expand.c
+
+- Reads the variable name after `$`
+- Example: `$USER`
+- Extracts `"USER"`
+- Calls `env_get(data->env, name)`
+- If variable exists, appends its value to result
+
+How it works:
+- find start after `$`
+- read characters while valid in a variable name
+- `ft_substr` to get the name
+- look up in environment
+- append value if found
+
+---
+
+### `expand_status_var`
+File: expand_utils2.c
+
+- Handles `$?`
+- Converts `data->status` to a string with `ft_itoa`
+- Appends that value to output
+- Moves index by 2 so both `$` and `?` are skipped
+
+Example:
+- if last command exited with 42
+- `$?` becomes `"42"`
+
+---
+
+## 3) Character processing and quote logic
+
+### `process_char`
+File: expand.c
+
+This is the heart of quote-aware expansion.
+
+It checks each character and does:
+- if char is `'` and not in double quote: toggle single quote state
+- if char is `"` and not in single quote: toggle double quote state
+- if char is `$` and not in single quote: expand variable
+- otherwise: append char as normal
+
+This is how the shell knows:
+- inside single quotes: no variable expansion
+- inside double quotes: variable expansion still happens
+
+---
+
+### `handle_single_quote`
+File: expand_utils2.c
+
+- toggles the single-quote state on/off
+- moves forward one character
+
+### `handle_double_quote`
+File: expand_utils2.c
+
+- same idea, but for double quotes
+
+### `append_literal_char`
+File: expand_utils2.c
+
+- appends one normal character to output
+- used for letters, spaces, punctuation, numbers, etc.
+
+---
+
+## 4) Variable-name validation helpers
+
+### `is_var_start`
+File: expand_utils.c
+
+- checks if a char can start a variable name
+- valid: letters and `_`
+- invalid: digits, `-`, `?`, etc.
+
+Examples:
+- `_HOME` -> valid
+- `USER` -> valid
+- `1ABC` -> invalid
+
+---
+
+### `is_var_char`
+File: expand_utils.c
+
+- checks characters allowed after the first char
+- valid: letters, digits, underscore
+
+Example:
+- `VAR_123` -> valid
+
+---
+
+### `is_var_name_char`
+File: expand_utils.c
+
+- same idea as `is_var_start`
+- used when reading the name after `$`
+- keeps parsing strict
+
+---
+
+## 5) String building helpers
+
+### `append_text`
+File: expand_utils.c
+
+- appends a whole string to the current result
+- uses `ft_strjoin`
+- frees the old result after joining
+
+This is the main builder for variable expansion.
+
+---
+
+### `append_char`
+File: expand_utils.c
+
+- converts one char into a 2-byte string
+- then calls `append_text`
+
+---
+
+### `remove_empty_word`
+File: expand.c
+
+- removes a token from the linked list
+- reconnects previous and next pointers
+- frees token value and token node
+
+This is used when:
+- the expanded word becomes empty
+- and it was not quoted
+
+---
+
+## 6) Quote detection helper
+
+### `word_has_quote`
+File: expand_utils2.c
+
+- scans the original word
+- returns `1` if it contains `'` or `"`
+- otherwise returns `0`
+
+Used to decide:
+- if empty result should be removed
+- or if empty quoted string should remain
+
+---
+
+## Overall big picture
+
+The expansion system works like this:
+
+1. `expand_tokens` goes through all tokens.
+2. `expand_current_word` expands one word.
+3. `expand_word` scans the word char by char.
+4. `process_char` decides:
+   - plain char
+   - quote toggle
+   - variable expansion
+5. `handle_dollar` handles:
+   - `$VAR`
+   - `$?`
+   - `$`
+6. The result is built with `append_text` and `append_char`.
+7. Empty unquoted words are removed.
+
+So for input like:
+
+`echo "$USER $?"`
+
+it will:
+- keep the double quotes as quote state
+- expand `$USER` from environment
+- expand `$?` from current shell status
+- produce the final string passed to execution
+
+If you want, I can next explain this same logic with a few concrete examples like:
+- `$HOME/bin`
+- `"hello $USER"`
+- '$USER'
+- `"$EMPTY"`

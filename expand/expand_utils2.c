@@ -6,14 +6,14 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 18:59:04 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/04 12:54:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 19:35:02 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Toggles the single-quote state.
+ * Purpose: Toggles the single-quote state.
  * 
  * It flips `in_single` and advances the index by one.
  * This means quotes are tracked while scanning the word.
@@ -26,7 +26,7 @@ int	handle_single_quote(int *in_single, size_t *i)
 }
 
 /**
- * Same behavior as single quote, but for double quotes.
+ * Purpose: Same behavior as single quote, but for double quotes.
  * 
  * It flips `in_double`.
  */
@@ -38,7 +38,7 @@ int	handle_double_quote(int *in_double, size_t *i)
 }
 
 /**
- * Appends a normal character directly to the output string.
+ * Purpose: Appends a normal character directly to the output string.
  * 
  * It is used for characters that are not special:
  * 1. plain letters
@@ -56,11 +56,10 @@ int	append_literal_char(char **result, const char *word, size_t *i)
 }
 
 /**
- * Handles `$?`
- * It converts the shell status value to a string with `ft_itoa`
- * Appends it to the result
- * Increments the index by 2 so the `?` and the following character 
- * are skipped correctly
+ * 1. Handles `$?`
+ * 2. Converts data->status to a string with ft_itoa
+ * 3. Appends that value to output
+ * 4. Moves index by 2 so both $ and ? are skipped
  * 
  * Example:
  * * input: `$?`
@@ -81,6 +80,15 @@ int	expand_status_var(t_data *data, char **result, size_t *i)
 	return (0);
 }
 
+/**
+ * 1. scans the original word
+ * 2. returns `1` if it contains `'` or `"`
+ * 3. otherwise returns `0`
+ * 
+ * Used to decide:
+ * 1. if empty result should be removed
+ * 2. or if empty quoted string should remain
+ */
 int	word_has_quote(const char *word)
 {
 	while (*word)

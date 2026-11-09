@@ -6,22 +6,30 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 15:05:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/04 13:46:33 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 19:32:39 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Handles `$VAR`
+ * Purpose: Handles `$VAR`
  *
- * 1. starts at the char after `$`
- * 2. reads the variable name
- * 3. extracts the name with `ft_substr`
- * 4. looks it up in the environment using `env_get`
- * 5. appends the value if found
+ * 1. Reads the variable name after `$`
+ * 2. Example: `$USER`
+ * 3. Extracts `"USER"`
+ * 4. Calls `env_get(data->env, name)`
+ * 5. If variable exists, appends its value to result
  * 
- * If the variable is undefined, it does nothing and leaves the result unchanged.
+ * How it works:
+ * 1. find start after `$`
+ * 2. read characters while valid in a variable name
+ * 3. `ft_substr` to get the name
+ * 4. look up in environment
+ * 5. append value if found
+ * 
+ * If the variable is undefined, it does nothing and leaves the result 
+ * unchanged.
  * 
  * Example:
  * input: `$USER`
@@ -53,13 +61,18 @@ int	expand_env_var(t_data *data, const char *word, size_t *i, char **result)
 }
 
 /**
- * Central logic for $ processing.
+ * Purpose: This is the main decision function when a $ is found.
  * 
  * Cases:
  * 1. `$` at the end of the string: keep $ literally
  * 2. `$?`: expand exit status
  * 3. `$NAME`: expand environment variable
  * 4. otherwise: keep `$` as a literal char and continue
+ * 
+ * Example:
+ * 1. input: `$USER` -> `alice`
+ * 2. input: `$?` -> `0` or `1`
+ * 3. input: `$` -> `$`
  * 
  * This function decides what to do when the parser sees `$`.
  */
@@ -85,15 +98,17 @@ int	handle_dollar(t_data *data, const char *word, size_t *i, char **result)
 }
 
 /**
- * Main state-based character processor.
+ * Purpose: Main state-based character processor.
  * 
- * It looks at one character and decides what to do:
+ * It checks each character and does:
  * 1. if it is `'` and not inside double quotes: toggle single quote state
  * 2. if it is `"` and not inside single quotes: toggle double quote state
  * 3. if it is `$` and not inside single quotes: call `handle_dollar`
  * 4. otherwise: append the character literally
  * 
- * This is the heart of quote-aware expansion.
+ * This is how the shell knows:
+ * * inside single quotes: no variable expansion
+ * * inside double quotes: variable expansion still happens
  */
 int	process_char(t_exp_state *state)
 {
@@ -112,14 +127,22 @@ int	process_char(t_exp_state *state)
 }
 
 /**
- * Expands the variable references in one word.
+ * Purpose: Expands the variable references in one word.
  *
- * 1. validate input
- * 2. create empty output string
- * 3. initialize index and quote flags
- * 4. loop over every character in the word
- * 5. call `process_char` for each character
- * 6. return the final expanded string
+ * 1. Expands the contents of one word string.
+ * 2. Loops character by character.
+ * 3. Uses a state machine with:
+ * * `in_single`
+ * * `in_double`
+ * * current index `i`
+ * * result buffer
+ * 
+ * How it works:
+ * 1. start with empty string
+ * 2. process each character
+ * 3. if char is `$` and not inside single quotes, call `handle_dollar`
+ * 4. otherwise append the char literally
+ * 5. at the end, return expanded final string
  * 
  * This function is responsible for turning:
  * * `hello$USER`
@@ -155,7 +178,7 @@ char	*expand_word(t_data *data, const char *word)
 }
 
 /**
- * removes a token safely
+ * Purpose: removes a token safely
  * 
  * 1. Saves the token after the current one.
  * 2. Links the previous token directly to that next token.
@@ -163,8 +186,7 @@ char	*expand_word(t_data *data, const char *word)
  * 4. Frees the token value and token structure.
  * 5. Updates `current` to the next token.
  */
-void	remove_empty_word(t_token **tokens, t_token **cur,
-				t_token **pre)
+void	remove_empty_word(t_token **tokens, t_token **cur, t_token **pre)
 {
 	t_token	*next;
 
