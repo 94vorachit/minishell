@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:45 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 17:24:52 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 22:10:05 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,14 +47,14 @@ void	sig_ignore(void)
  * This is the signal setup used during heredoc mode.
  * 
  * Meaning:
- * 1. `Ctrl+C` uses `sig_interrupt`
- * 2. `Ctrl+\` uses `sig_quit`
+ * 1. `Ctrl+C` uses default signal behavior
+ * 2. `Ctrl+\` is ignored
  * 
  * This is a special mode where the shell is waiting for multi-line input, 
  * and the signal handlers are set to behave appropriately for that context.
  */
 void	sig_heredoc(void)
 {
-	signal(SIGINT, sig_interrupt);
+	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_IGN);
 }

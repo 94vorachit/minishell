@@ -91,8 +91,6 @@ void	sig_init(void);
 void	sig_default(void);
 void	sig_ignore(void);
 void	sig_heredoc(void);
-void	sig_quit(int sig);
-void	sig_interrupt(int sig);
 
 /* token & lexer */
 int 	ft_isoperator(char c);

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 21:54:29 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 22:10:05 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ void	sig_disabled_display(void)
 void	sig_reprompt(int sig)
 {
 	(void)sig;
+	sig_disabled_display();
 	g_signal = SIGINT;
 	write(1, "\n", 1);
 	rl_on_new_line();
@@ -69,58 +70,28 @@ void	sig_reprompt(int sig)
 }
 
 /**
- * This is the handler for `SIGQUIT` (Ctrl+).
- * 
- * It does not exit the shell.
- * It only:
- * 1. disables control-character echo
- * 2. moves readline to a fresh line
- * 3. redisplays the prompt
- * 
- * This is usually used to ignore `Ctrl+\` in an interactive shell.
- */
-void	sig_quit(int sig)
-{
-	(void)sig;
-	sig_disabled_display();
-	g_signal = SIGQUIT;
-	write(1, "\n", 1);
-	rl_on_new_line();
-	rl_redisplay();
-}
-
-/**
- * This is another signal handler, but it exits the shell.
- *
- * 1. disables control-character display
- * 2. refreshes readline state
- * 3. exits with status `130`
- * 
- * This is used when a foreground program is interrupted and the shell should 
- * exit in a controlled way.
- */
-void	sig_interrupt(int sig)
-{
-	(void)sig;
-	// sig_disabled_display();
-	// rl_on_new_line();
-	// rl_redisplay();
-	exit(130);
-}
-
-/**
  * This is the setup function for the signal handlers.
  * 
  * It registers:
  * 1. `SIGINT` → `sig_reprompt`
- * 2. `SIGQUIT` → `sig_quit`
+ * 2. `SIGQUIT` → ignored
  * 
  * This means the shell is configured during startup to react to user 
  * interrupt signals properly.
  */
 void	sig_init(void)
 {
+	struct sigaction	int_act;
+	struct sigaction	quit_act;
+
+	sigemptyset(&int_act.sa_mask);
+	sigemptyset(&quit_act.sa_mask);
+	int_act.sa_handler = sig_reprompt;
+	int_act.sa_flags = 0;
+	quit_act.sa_handler = SIG_IGN;
+	quit_act.sa_flags = 0;
+	sigaction(SIGINT, &int_act, NULL);
+	sigaction(SIGQUIT, &quit_act, NULL);
 	sig_disabled_display();
-	signal(SIGINT, sig_reprompt);
-	signal(SIGQUIT, SIG_IGN);
 }
+
