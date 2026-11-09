@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 18:16:49 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -145,6 +145,11 @@ int	main(int ac, char **av, char **env)
 	while (1)
 	{
 		line = readline("minishell > ");
+		if (g_signal == SIGINT || g_signal == SIGQUIT)
+		{
+			data->status = 128 + g_signal;
+			g_signal = 0;
+		}
 		if (!line)
 		{
 			ft_putstr_fd("exit\n", STDERR);

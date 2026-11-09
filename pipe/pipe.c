@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:45:58 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 20:06:08 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,10 @@ int	execute_pipeline(t_data *data, t_cmd *cmd)
 	if (prepare_heredoc_list(cmd) == -1)
 	{
 		free(pids);
-		data->status = 130;
+		if (g_signal == SIGINT || g_signal == SIGQUIT)
+			data->status = 128 + g_signal;
+		else
+			data->status = 130;
 		return (data->status);
 	}
 	if (fork_pipeline_cmds(data, cmd, pids) == -1)

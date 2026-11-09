@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 17:15:54 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,7 +116,10 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 		return (SUCCESS);
 	if (prepare_heredoc_list(cmd) == -1)
 	{
-		data->status = 130;
+		if (g_signal == SIGINT || g_signal == SIGQUIT)
+			data->status = 128 + g_signal;
+		else
+			data->status = 130;
 		return (data->status);
 	}
 	if (is_builtin(cmd->argv[0]))

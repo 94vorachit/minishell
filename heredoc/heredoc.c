@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 14:18:47 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 19:58:40 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,9 +54,16 @@ int	wait_heredoc_child(pid_t pid, int pipefd[2])
 
 	close(pipefd[1]);
 	waitpid(pid, &status, 0);
-	if (WIFSIGNALED(status) || (WIFEXITED(status)
-			&& WEXITSTATUS(status) != 0))
+	if (WIFSIGNALED(status))
 	{
+		g_signal = WTERMSIG(status);
+		close(pipefd[0]);
+		return (-1);
+	}
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+	{
+		if (WEXITSTATUS(status) == 130)
+			g_signal = SIGINT;
 		close(pipefd[0]);
 		return (-1);
 	}
