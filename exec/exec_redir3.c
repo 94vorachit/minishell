@@ -6,20 +6,19 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 16:24:05 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 16:24:50 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:48:59 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Replaces stdin with the file from `cmd->infile`.
+ * Purpose: replace stdin with an input file.
  *
- * Behavior:
- * 1. Opens the file with `open(..., O_RDONLY)`
- * 2. If fail: prints `perror(...)`
- * 3. Uses `dup2(fd, STDIN_FILENO)`
- * 4. Closes the file descriptor
+ * How it works:
+ * 1. open file read-only
+ * 2. `dup2(fd, STDIN_FILENO)`
+ * 3. close old fd
  */
 int	redirect_file(char *infile)
 {
@@ -48,6 +47,13 @@ int	redirect_file(char *infile)
 	return (0);
 }
 
+/**
+ * Purpose: apply input redirection to the current process.
+ * 
+ * How it works:
+ * 1. if heredoc exists: use heredoc fd
+ * 2. else use `redirect_file(cmd->infile)`
+ */
 int	redirect_input(t_cmd *cmd)
 {
 	if (cmd->heredoc_fd != -1)
@@ -64,6 +70,13 @@ int	redirect_input(t_cmd *cmd)
 	return (redirect_file(cmd->infile));
 }
 
+/**
+ * Purpose: open outfile for writing.
+ * 
+ * How it works:
+ * 1. append mode uses `O_APPEND`
+ * 2. normal output uses `O_TRUNC`
+ */
 int	open_output_file(t_cmd *cmd)
 {
 	if (cmd->append)
@@ -71,6 +84,14 @@ int	open_output_file(t_cmd *cmd)
 	return (open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644));
 }
 
+/**
+ * Purpose: replace stdout with output file.
+ * 
+ * How it works:
+ * 1. open file
+ * 2. `dup2(fd, STDOUT_FILENO)`
+ * 3. close fd
+ */
 int	redirect_output(t_cmd *cmd)
 {
 	int	fd;
