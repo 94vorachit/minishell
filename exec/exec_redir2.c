@@ -6,12 +6,21 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 20:33:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/05 20:36:30 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:45:19 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Purpose: prepare output target file for redirection.
+ * 
+ * How it works:
+ * 
+ * 1. opens file with `O_CREAT | O_TRUNC` for `>`
+ * 2. or `O_APPEND` for `>>`
+ * 3. prints error if file cannot be opened
+ */
 int	open_output_redir(char *value, t_token_type type)
 {
 	int	fd;
@@ -37,6 +46,15 @@ int	open_output_redir(char *value, t_token_type type)
 	return (0);
 }
 
+/**
+ * Purpose: assign a redirection token to `t_cmd`.
+ * 
+ * How it works:
+ * 1. ensure next token is a word
+ * 2. duplicate filename
+ * 3. if output redirect: validate file opening
+ * 4. then assign into `cmd`
+ */
 int	set_redirection(t_cmd *cmd, t_token *token)
 {
 	char	*value;
@@ -57,6 +75,14 @@ int	set_redirection(t_cmd *cmd, t_token *token)
 	return (0);
 }
 
+/**
+ * Purpose: process `<` redirection.
+ * 
+ * How it works:
+ * 1. duplicates the input file name
+ * 2. if file does not exist, stores it in `cmd->infile`
+ * 3. otherwise frees duplicate and returns success
+ */
 int	handle_redir_in(t_cmd *cmd, t_token *cur)
 {
 	char	*value;
@@ -74,6 +100,16 @@ int	handle_redir_in(t_cmd *cmd, t_token *cur)
 	return (0);
 }
 
+/**
+ * Purpose: scan tokens and extract all redirections in the command.
+ * 
+ * How it works:
+ * 1. walk token list until pipe
+ * 2. detect redirection token
+ * 3. validate next token
+ * 4. call `set_redirection` or `handle_redir_in`
+ * 5. continue scanning
+ */
 int	parse_redirections(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
