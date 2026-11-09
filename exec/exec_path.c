@@ -6,14 +6,19 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 02:12:56 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/03 15:43:15 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/09 17:36:04 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Frees a dynamically allocated array of strings.
+ * Purpose: free a NULL-terminated array of strings.
+ * 
+ * How it works:
+ * 1. loops through each string
+ * 2. frees each element
+ * 3. frees the array itself
  */
 void	ft_free_split(char **arr)
 {
@@ -31,7 +36,7 @@ void	ft_free_split(char **arr)
 }
 
 /**
- * Checks whether a command exists and is executable inside one directory.
+ * Purpose: test whether command exists in one directory.
  * 
  * For example:
  * `dir = "/usr/bin";`
@@ -40,9 +45,10 @@ void	ft_free_split(char **arr)
  * It builds:
  * `/usr/bin/ls`
  * 
- * 1. Add / to the directory
- * 2. Add the command name
- * 3. Check execute permission
+ * How it works:
+ * 1. forms `dir + "/" + cmd`
+ * 2. checks `access(path, X_OK)`
+ * 3. returns allocated path if executable
  * 
  * If the check succeeds, the function returns the allocated path:
  * `"/usr/bin/ls"`
@@ -66,7 +72,7 @@ char	*check_executable_in_dir(const char *dir, const char *cmd)
 }
 
 /**
- * Searches for a command in all directories from PATH.
+ * Purpose: search every PATH directory.
  * 
  * For example, after splitting:
  * `PATH=/usr/local/bin:/usr/bin:/bin`
@@ -84,6 +90,11 @@ char	*check_executable_in_dir(const char *dir, const char *cmd)
  * /usr/bin/ls
  * /bin/ls
  * 
+ * How it works:
+ * 1. loops over `PATH` entries split by `:`
+ * 2. calls `check_executable_in_dir`
+ * 3. stops at first valid match
+
  * It stops at the first executable path found
  * If no directory contains an executable command, it returns: `NULL`
  */
@@ -104,6 +115,8 @@ char	*search_in_paths(char **paths, const char *cmd)
 }
 
 /**
+ * Purpose: find the executable file for a command name.
+ * 
  * This is the main public function in the file. It receives:
  * * `env`: the shell environment linked list
  * * `cmd`: the command name, such as `"ls"` or `"cat"`
@@ -123,9 +136,9 @@ char	*search_in_paths(char **paths, const char *cmd)
  * paths[1] = "/usr/bin"
  * paths[2] = "/bin"
  * paths[3] = NULL
- * 5. Search all directories
+ * 5. Search all directories with `search_in_paths`
  * 6. Free the split array
- * 7. Return the result
+ * 7. return full path or `NULL`
  */
 char	*find_executable_path(t_env *env, const char *cmd)
 {
