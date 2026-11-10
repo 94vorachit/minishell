@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 22:10:05 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 14:45:18 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,20 +15,15 @@
 volatile sig_atomic_t	g_signal = 0;
 
 /**
- * This file sets up how the shell reacts when the user presses Ctrl+C or Ctrl+.
- * 
- * This is a helper function.
- * 
- * It disables the terminal’s control-character display flag.
- * In plain terms, it stops the shell from showing `^C` when `Ctrl+C` is pressed.
+ * Disables terminal echo of control characters.
  *
- * How it works:
- * * `tcgetattr(0, &termios_p)` reads terminal settings
- * * `termios_p.c_lflag &= ~(ECHOCTL)`; clears the flag that
- * echoes control characters
- * * `tcsetattr(0, TCSANOW, &termios_p)` applies the new settings
+ * This prevents the shell from showing `^C` when the user presses Ctrl+C,
+ * while still allowing the signal itself to reach the program.
  *
- * This helps make the prompt behave more cleanly in a minishell.
+ * Implementation:
+ * - `tcgetattr()` reads the current terminal settings
+ * - `ECHOCTL` is cleared from `c_lflag`
+ * - `tcsetattr()` applies the new settings immediately
  */
 void	sig_disabled_display(void)
 {
@@ -42,21 +37,16 @@ void	sig_disabled_display(void)
 }
 
 /**
- * This is the handler for `SIGINT` (Ctrl+C).
- * 
- * 1. disables the control-character display
- * 2. prints a newline
- * 3. tells readline the cursor is on a new line
- * 4. clears the current input line
- * 5. redraws the prompt
+ * Interactive SIGINT handler.
  *
- * So when the user presses Ctrl+C, the shell prints a new prompt on the next
- * line instead of leaving the old input visible.
- * 
- * Important points:
- * `rl_on_new_line()`; resets readline state
- * `rl_replace_line("", 0)`; clears the current input buffer
- * `rl_redisplay()`; redraws the prompt
+ * When the user presses Ctrl+C at the prompt, the shell clears the current
+ * readline buffer, prints a newline, and redraws the prompt.
+ *
+ * Behavior:
+ * - set `g_signal = SIGINT`
+ * - call `rl_on_new_line()`
+ * - clear the current input line
+ * - redisplay the prompt
  */
 void	sig_reprompt(int sig)
 {
@@ -70,14 +60,12 @@ void	sig_reprompt(int sig)
 }
 
 /**
- * This is the setup function for the signal handlers.
- * 
- * It registers:
- * 1. `SIGINT` → `sig_reprompt`
- * 2. `SIGQUIT` → ignored
- * 
- * This means the shell is configured during startup to react to user 
- * interrupt signals properly.
+ * Installs the interactive shell signal handlers.
+ *
+ * - `SIGINT` is handled by `sig_reprompt`
+ * - `SIGQUIT` is ignored while waiting for user input
+ *
+ * This is the setup used by the main prompt loop.
  */
 void	sig_init(void)
 {
@@ -95,3 +83,11 @@ void	sig_init(void)
 	sig_disabled_display();
 }
 
+/**
+ * Notes:
+ * - `SIGINT` must update `g_signal` so the prompt loop can set the shell
+ *   status to `128 + SIGINT`.
+ * - `SIGQUIT` is intentionally ignored while idle, matching normal shell
+ *   behavior at the prompt.
+ * - `sig_init()` may be called repeatedly, so it must not reset `g_signal`.
+ */
