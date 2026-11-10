@@ -6,12 +6,20 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 13:46:00 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 17:21:32 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 17:44:05 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
+/**
+ * Handle bare shell-special variables that should be ignored at the prompt.
+ *
+ * In bash-like shells, a standalone `$PWD`, `$OLDPWD`, or `$SHELL` does not
+ * print anything; it just returns to a fresh prompt. However, when used inside
+ * a command like `echo $PWD` or `echo $SHELL`, the variable should expand to its
+ * value normally.
+ */
 int	expand_special_case(t_token **tokens, t_token **cur, t_token **pre)
 {
 	if ((*cur)->value && !word_has_quote((*cur)->value)
