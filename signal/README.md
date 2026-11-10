@@ -1,4 +1,6 @@
-`sig_disabled_display()` disables the terminal’s display of control characters, especially `Ctrl-C`.
+`sig_disabled_display()` disables the terminal's display of control characters in interactive mode, especially `Ctrl-C`.
+
+It is guarded by `isatty(STDIN_FILENO)` because terminal control calls are only valid when stdin is attached to a real TTY.
 
 The relevant line is:
 
@@ -67,9 +69,10 @@ Applies the modified settings immediately.
 A shell must:
 
 - receive `SIGINT` when the user presses `Ctrl-C`
-- avoid printing `^C` itself
+- avoid printing `^C` itself in interactive mode
 - ignore `Ctrl-\` (`SIGQUIT`) at the prompt
 - restore normal terminal behavior for child processes
+- avoid calling terminal APIs in non-interactive mode such as pipes or tests
 
 A minimal setup looks like:
 
@@ -127,7 +130,7 @@ sa.sa_handler = SIG_IGN;
 sigaction(SIGQUIT, &sa, NULL);
 ```
 
-This is why `sigaction()` is preferred in a minishell.
+This is why `sigaction()` is preferred in a minishell, and why the prompt-specific helper is guarded so it does not run when stdin is not a terminal.
 
 ## Normal shell behavior
 

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 15:35:42 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 15:57:08 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,15 @@
 volatile sig_atomic_t	g_signal = 0;
 
 /**
- * Disables terminal echo of control characters.
+ * Disable echoing of control characters in interactive mode.
  *
- * This prevents the shell from showing `^C` when the user presses Ctrl+C,
- * while still allowing the signal itself to reach the program.
+ * This keeps the prompt clean when the user presses Ctrl+C: the shell still
+ * receives `SIGINT`, but the terminal does not print `^C` itself. The call is
+ * guarded by `isatty(STDIN_FILENO)` because terminal control APIs are only
+ * valid when stdin is attached to a real TTY.
  *
  * Implementation:
- * - `tcgetattr()` reads the current terminal settings
+ * - `tcgetattr()` reads the current terminal attributes
  * - `ECHOCTL` is cleared from `c_lflag`
  * - `tcsetattr()` applies the new settings immediately
  */
@@ -39,16 +41,19 @@ void	sig_disabled_display(void)
 }
 
 /**
- * Interactive SIGINT handler.
+ * Prompt-level SIGINT handler.
  *
- * When the user presses Ctrl+C at the prompt, the shell clears the current
- * readline buffer, prints a newline, and redraws the prompt.
+ * When the user presses Ctrl+C while the shell is waiting for input, bash-like
+ * behavior is to move to a fresh line, clear the current readline buffer, and
+ * redraw the prompt. The handler records the signal in `g_signal` so the main
+ * loop can convert it into the shell status `130`.
  *
  * Behavior:
  * - set `g_signal = SIGINT`
+ * - print a newline
  * - call `rl_on_new_line()`
- * - clear the current input line
- * - redisplay the prompt
+ * - clear the readline buffer
+ * - redraw the prompt
  */
 void	sig_reprompt(int sig)
 {
@@ -62,12 +67,14 @@ void	sig_reprompt(int sig)
 }
 
 /**
- * Installs the interactive shell signal handlers.
+ * Install prompt-mode signal handlers for the interactive shell.
  *
- * - `SIGINT` is handled by `sig_reprompt`
- * - `SIGQUIT` is ignored while waiting for user input
+ * - `SIGINT` uses `sig_reprompt`, which keeps readline and the prompt state in
+ *   sync with the shell's exit-status logic
+ * - `SIGQUIT` is ignored while the shell is idle at the prompt
  *
- * This is the setup used by the main prompt loop.
+ * This setup is only suitable for the parent shell process, not for child
+ * programs. Terminal control is disabled only when stdin is a TTY.
  */
 void	sig_init(void)
 {

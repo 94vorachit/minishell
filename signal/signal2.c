@@ -6,17 +6,18 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:45 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 14:45:18 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 15:57:08 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Restores the default signal behavior for child processes.
+ * Restore the default handling for child processes.
  *
- * This is used before executing external programs so they can handle
- * `SIGINT` and `SIGQUIT` the same way a normal shell would.
+ * External commands should not inherit the shell's prompt-level handlers. This
+ * function resets `SIGINT` and `SIGQUIT` to the OS defaults so children behave
+ * like normal processes under bash.
  */
 void	sig_default(void)
 {
@@ -34,10 +35,11 @@ void	sig_default(void)
 }
 
 /**
- * Ignores `SIGINT` and `SIGQUIT` for a short execution window.
+ * Ignore `SIGINT` and `SIGQUIT` in the parent shell during a child-run window.
  *
- * This is typically used while spawning a subprocess or heredoc child, so the
- * parent shell does not react to the signals while the child is running.
+ * This prevents the parent shell from reacting to prompt-level signals while it
+ * is waiting on a child process or a heredoc subprocess. The shell resumes its
+ * normal handling once the child is done.
  */
 void	sig_ignore(void)
 {
@@ -55,11 +57,11 @@ void	sig_ignore(void)
 }
 
 /**
- * Configures heredoc signal behavior.
+ * Configure signal behavior for heredoc subprocesses.
  *
- * - `SIGINT` uses default handling so the heredoc child is interrupted
- *   normally and the parent can detect it through `waitpid()`
- * - `SIGQUIT` is ignored
+ * A heredoc child should stop on `SIGINT` in the normal way so the parent can
+ * detect the interruption through `waitpid()`. `SIGQUIT` remains ignored to
+ * match the shell's prompt-level policy and avoid spurious core-dumps.
  */
 void	sig_heredoc(void)
 {
