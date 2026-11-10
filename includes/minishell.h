@@ -82,6 +82,12 @@ typedef struct s_exp_state
 
 extern volatile sig_atomic_t	g_signal;
 
+int		init(t_data *mini, char **env);
+int		check_args(int ac, char **av);
+int		setup_data(t_data **data, char **env);
+void	apply_signal_status(t_data *data);
+int		check_line_state(t_data *data, char **line);
+int		handle_input_line(t_data *data, char **line);
 void	free_shell(t_data *data);
 t_env	*ft_env_new(char *value);
 void	ft_env_clear(t_env **env);
