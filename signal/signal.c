@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 19:15:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 14:45:18 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 15:35:42 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,12 @@ void	sig_disabled_display(void)
 {
 	struct termios	termios_p;
 
-	if (tcgetattr(0, &termios_p))
+	if (!isatty(STDIN_FILENO))
+		return ;
+	if (tcgetattr(STDIN_FILENO, &termios_p))
 		perror("minishell: tcgetattr");
 	termios_p.c_lflag &= ~(ECHOCTL);
-	if (tcsetattr(0, TCSANOW, &termios_p))
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &termios_p))
 		perror("minishell: tcsetattr");
 }
 

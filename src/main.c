@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 21:54:52 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 15:29:32 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,7 +154,7 @@ int	main(int ac, char **av, char **env)
 		{
 			ft_putstr_fd("exit\n", STDERR);
 			free_shell(data);
-			return (SUCCESS);
+			return (data->status);
 		}
 		if (line[0] == '\0')
 		{
@@ -206,5 +206,5 @@ int	main(int ac, char **av, char **env)
 		free(line);
 	}
 	free_shell(data);
-	return (SUCCESS);
+	return (data->status);
 }
