@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 15:29:32 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 17:21:55 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,41 +31,21 @@ void	free_shell(t_data *data)
 	}
 }
 
-int	update_shlvl(t_env *env, int shlvl)
-{
-	char	*level;
-	char	*new_value;
-	char	*old_value;
-
-	level = ft_itoa(shlvl);
-	if (!level)
-		return (0);
-	new_value = ft_strjoin("SHLVL=", level);
-	free(level);
-	if (!new_value)
-		return (0);
-	old_value = env->value;
-	env->value = new_value;
-	free(old_value);
-	return (1);
-}
-
-void	ft_shlvl(t_env *env)
+void	ft_shlvl(t_env **env)
 {
 	char	*val;
+	char	*level;
 	int		shlvl;
 
 	val = getenv("SHLVL");
 	if (!val || val[0] == '\0')
 		return ;
 	shlvl = ft_atoi(val) + 1;
-	while (env)
-	{
-		if (ft_strncmp("SHLVL=", env->value, 6) == 0
-			&& update_shlvl(env, shlvl))
-			return ;
-		env = env->next;
-	}
+	level = ft_itoa(shlvl);
+	if (!level)
+		return ;
+	env_set(env, "SHLVL", level);
+	free(level);
 }
 
 int	ft_init_env(t_env **mini_env, char **env)
@@ -99,23 +79,11 @@ int	init(t_data *mini, char **env)
 	// char	*cwd;
 
 	mini->status = 0; //This sets the shell's initial exit status to success.
-	// mini->cmd_count = 0; //No commands have been parsed yet.
 	mini->tokens = NULL;
 	mini->export = NULL;
 	if (ft_init_env(&mini->env, env) == -1)
 		return (-1);
-	// if (!env_get(mini->env, "PWD"))
-	// {
-	// 	cwd = getcwd(NULL, 0);
-	// 	if (!cwd || env_set(&mini->env, "PWD", cwd) == -1)
-	// 	{
-	// 		free(cwd);
-	// 		ft_env_clear(&mini->env);
-	// 		return (-1);
-	// 	}
-	// 	free(cwd);
-	// }
-	ft_shlvl(mini->env);
+	ft_shlvl(&mini->env);
 	return (0);
 }
 

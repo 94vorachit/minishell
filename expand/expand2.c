@@ -6,11 +6,26 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 13:46:00 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 18:55:06 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/10 17:21:32 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+int	expand_special_case(t_token **tokens, t_token **cur, t_token **pre)
+{
+	if ((*cur)->value && !word_has_quote((*cur)->value)
+		&& ((*cur)->value[0] == '$')
+		&& (!*pre)
+		&& (ft_strcmp((*cur)->value, "$PWD") == 0
+			|| ft_strcmp((*cur)->value, "$OLDPWD") == 0
+			|| ft_strcmp((*cur)->value, "$SHELL") == 0))
+	{
+		remove_empty_word(tokens, cur, pre);
+		return (1);
+	}
+	return (0);
+}
 
 /**
  * * Expands one token only.
@@ -33,6 +48,11 @@ int	expand_current_word(t_data *data, t_token **tokens,
 	exp = expand_word(data, (*cur)->value);
 	if (!exp)
 		return (-1);
+	if (expand_special_case(tokens, cur, pre))
+	{
+		free(exp);
+		return (1);
+	}
 	if (exp[0] == '\0' && !word_has_quote((*cur)->value))
 	{
 		free(exp);
