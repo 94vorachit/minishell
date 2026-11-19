@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 18:57:50 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 19:31:26 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 13:20:16 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,11 +51,11 @@ int	is_var_char(char c)
  * It is used to parse only valid variable names when reading `$NAME`.
  * This keeps the variable name parsing strict and avoids accidentally 
  * consuming digits or punctuation.
-*/
+
 int	is_var_name_char(char c)
 {
 	return (ft_isalpha((unsigned char)c) || c == '_');
-}
+}*/
 
 /**
  * Purpose: Appends a string to the current result buffer.

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 19:03:55 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 13:19:35 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,7 +150,7 @@ void	remove_empty_word(t_token **tokens, t_token **cur, t_token **pre);
 /* expand */
 int		is_var_start(char c);
 int		is_var_char(char c);
-int		is_var_name_char(char c);
+// int		is_var_name_char(char c);
 char	*append_text(char *result, const char *text);
 char	*append_char(char *result, char c);
 int		expand_status_var(t_data *data, char **result, size_t *i);

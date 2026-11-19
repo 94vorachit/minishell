@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 15:05:12 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 19:32:39 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 13:18:53 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ int	expand_env_var(t_data *data, const char *word, size_t *i, char **result)
 
 	start = *i + 1;
 	*i = start;
-	while (word[*i] && is_var_name_char(word[*i]))
+	while (word[*i] && is_var_char(word[*i]))
 		(*i)++;
 	name = ft_substr(word, start, *i - start);
 	if (!name)
