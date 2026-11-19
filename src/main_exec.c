@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 13:52:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 17:04:33 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 19:50:21 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,14 +134,17 @@ int	run_simple_cmd_from_tokens(t_data *data, t_cmd *cmd)
  */
 int	execute_token_stream(t_data *data, t_cmd *cmd, char *line)
 {
+	int	syntax_ret;
+
 	if (lexer(line, &data->tokens) != 0)
 	{
 		data->status = SYNTAX_ERROR;
 		return (0);
 	}
-	if (ft_validate_syntax(data->tokens) != SUCCESS)
+	syntax_ret = ft_validate_syntax(data->tokens);
+	if (syntax_ret != SUCCESS)
 	{
-		data->status = SYNTAX_ERROR;
+		data->status = syntax_ret;
 		return (0);
 	}
 	if (expand_tokens(data, &data->tokens) == -1)

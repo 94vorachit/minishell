@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/28 19:36:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 15:27:44 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:16:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,38 +108,3 @@ int	run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp)
 	set_child_status(data, status);
 	return (data->status);
 }
-
-/*
-int	run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp)
-{
-	pid_t	pid;
-	int		status;
-
-	pid = fork();
-	if (pid < 0)
-	{
-		perror("fork");
-		free(exec_path);
-		ft_free_split(envp);
-		data->status = ERROR;
-		return (ERROR);
-	}
-	if (pid == 0)
-		run_child(cmd, exec_path, envp);
-	// waitpid(pid, &status, 0);
-	while (waitpid(pid, &status, 0) == -1)
-	{
-		if (errno != EINTR)
-		{
-			perror("waitpid");
-			free(exec_path);
-			ft_free_split(envp);
-			data->status = 1;
-			return (ERROR);
-		}
-	}
-	free(exec_path);
-	ft_free_split(envp);
-	set_child_status(data, status);
-	return (data->status);
-}*/

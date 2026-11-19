@@ -12,6 +12,11 @@
 
 #include "../includes/minishell.h"
 
+/**
+ * Purpose: function implementation.
+ *
+ * How it works: runs this function's core steps and returns its status/result.
+ */
 int	builtin_pwd(t_data *data, t_cmd *cmd)
 {
 	char	*cwd;

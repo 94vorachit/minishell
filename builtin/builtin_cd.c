@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 16:58:05 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/02 15:09:40 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 18:07:38 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,8 +60,11 @@ int	cd_get_path(t_data *data, t_cmd *cmd, char **path)
 	else
 		*path = cmd->argv[1];
 	if (!*path)
+	{
+		ft_putstr_fd("minishell: cd: HOME not set\n", STDERR);
 		return (ERROR);
-	if (cmd->argv[2])
+	}
+	if (cmd->argv[1] && cmd->argv[2])
 	{
 		cd_error(cmd->argv[2]);
 		return (ERROR);

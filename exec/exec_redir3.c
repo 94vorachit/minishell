@@ -6,11 +6,27 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 16:24:05 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 15:47:35 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:10:09 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Purpose: function implementation.
+ *
+ * How it works: runs this function's core steps and returns its status/result.
+ */
+int	segment_has_pipe(t_token *tokens)
+{
+	while (tokens)
+	{
+		if (tokens->type == T_PIPE)
+			return (1);
+		tokens = tokens->next;
+	}
+	return (0);
+}
 
 /**
  * Purpose: replace stdin with an input file.
@@ -29,9 +45,9 @@ int	redirect_file(char *infile)
 	{
 		if (errno == ENOENT)
 		{
-			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+			ft_putstr_fd("minishell: ", STDERR);
 			ft_putstr_fd(infile, STDERR);
-			ft_putstr_fd("\n", STDERR);
+			ft_putstr_fd(": No such file or directory\n", STDERR);
 		}
 		else
 			perror(infile);

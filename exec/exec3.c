@@ -6,11 +6,27 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 17:00:32 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 19:45:05 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 19:28:45 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Purpose: function implementation.
+ *
+ * How it works: runs this function's core steps and returns its status/result.
+ */
+int	is_directory_path(const char *path)
+{
+	int	fd;
+
+	fd = open(path, O_RDONLY | O_DIRECTORY);
+	if (fd < 0)
+		return (0);
+	close(fd);
+	return (1);
+}
 
 /**
  * Saves original stdin/stdout so built-ins can be run with 

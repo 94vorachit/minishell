@@ -6,11 +6,29 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:48:19 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:15:53 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Purpose: print the standard shell error for unresolved executable names.
+ *
+ * How it works:
+ * 1. if command contains '/', prints no-such-file-or-directory prefix
+ * 2. otherwise prints command-not-found prefix
+ * 3. appends the command name and newline to STDERR
+ */
+void	print_exec_not_found(char *cmd)
+{
+	if (ft_strchr(cmd, '/'))
+		ft_putstr_fd("minishell: no such file or directory: ", STDERR);
+	else
+		ft_putstr_fd("minishell: command not found: ", STDERR);
+	ft_putstr_fd(cmd, STDERR);
+	ft_putstr_fd("\n", STDERR);
+}
 
 /**
  * Purpose: resolve the real path of the command and build `envp`.
@@ -27,12 +45,7 @@ int	prepare_execution(t_data *data, t_cmd *cmd, char **exec_path, char ***envp)
 	*exec_path = find_executable_path(data->env, cmd->argv[0]);
 	if (!*exec_path)
 	{
-		if (ft_strchr(cmd->argv[0], '/'))
-			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
-		else
-			ft_putstr_fd("minishell: command not found: ", STDERR);
-		ft_putstr_fd(cmd->argv[0], STDERR);
-		ft_putstr_fd("\n", STDERR);
+		print_exec_not_found(cmd->argv[0]);
 		data->status = 127;
 		return (-1);
 	}
@@ -60,6 +73,13 @@ void	exec_external_child(t_cmd *cmd, char *exec_path, char **envp)
 		exit(1);
 	if (cmd->outfile && redirect_output(cmd) == -1)
 		exit(1);
+	if (is_directory_path(exec_path))
+	{
+		ft_putstr_fd("minishell: ", STDERR);
+		ft_putstr_fd(exec_path, STDERR);
+		ft_putstr_fd(": Is a directory\n", STDERR);
+		exit(126);
+	}
 	execve(exec_path, cmd->argv, envp);
 	perror(exec_path);
 	exit(126);
@@ -126,40 +146,3 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 		return (run_builtin_cmd(data, cmd));
 	return (run_external_cmd(data, cmd));
 }
-
-/*
-int	run_external_cmd(t_data *data, t_cmd *cmd)
-{
-	char	*exec_path;
-	char	**envp;
-	int		status;
-	int		child_status;
-
-	if (prepare_execution(data, cmd, &exec_path, &envp) == -1)
-		return (data->status);
-	sig_ignore();
-	status = fork();
-	if (status == 0)
-	{
-		sig_default();
-		exec_external_child(cmd, exec_path, envp);
-	}
-	// waitpid(status, &child_status, 0);
-	while (waitpid(status, &child_status, 0) == -1)
-	{
-		if (errno != EINTR)
-		{
-			perror("waitpid");
-			sig_init();
-			free(exec_path);
-			ft_free_split(envp);
-			data->status = 1;
-			return (ERROR);
-		}
-	}
-	sig_init();
-	free(exec_path);
-	ft_free_split(envp);
-	set_child_status(data, child_status);
-	return (data->status);
-}*/

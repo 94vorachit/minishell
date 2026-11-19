@@ -6,40 +6,11 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 20:24:16 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/10/28 18:33:45 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 19:51:49 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
-
-/**Checks whether a token type is a redirection.
- * 
- * It returns true for:
- * * `T_REDIR_IN`
- * * `T_REDIR_OUT`
- * * `T_APPEND`
- * * `T_HEREDOC`
- * 
- * This is used later to decide whether a token is a redirection operator.
- */
-int	ft_isredirection(t_token_type type)
-{
-	return (type == T_REDIR_IN || type == T_REDIR_OUT
-		|| type == T_APPEND || type == T_HEREDOC);
-}
-
-/** Checks whether a character is one of the shell operators:
- * * `|`
- * * `<`
- * * `>`
- * 
- * This is used while scanning a word to stop reading when 
- * the parser hits an operator.
- */
-int	ft_isoperator(char c)
-{
-	return (c == '|' || c == '<' || c == '>');
-}
 
 /**Reads a quoted section of a word.
  * 
@@ -72,8 +43,11 @@ int	ft_quote_word(char *line, int *index, char **word)
 	}
 	if (line[*index] != quote)
 	{
-		ft_putstr_fd(
-			"minishell: syntax error: unexpected end of file\n", STDERR);
+		ft_putstr_fd("minishell: unexpected EOF while looking for matching `",
+			STDERR);
+		ft_putchar_fd(quote, STDERR);
+		ft_putstr_fd("'\n", STDERR);
+		ft_print_syntax_eof();
 		return (SYNTAX_ERROR);
 	}
 	if (ft_add_char(word, quote) == -1)
@@ -82,18 +56,50 @@ int	ft_quote_word(char *line, int *index, char **word)
 	return (0);
 }
 
-/**Reads a normal word from the input.
- * 
- * It continues until:
- * * it reaches a space
- * * it reaches an operator (`|`, `<`, `>`)
- * * or the string ends
- * 
- * Inside the loop:
- * * if it sees a quote, it calls ft_quote_word
- * * otherwise, it copies the character into the word buffer
- * 
- * This is the main builder for a word token. 
+/**Handles one non-delimiter character while reading a word token.
+ *
+ * How it works:
+ * 1. if current char starts a quote block, delegates to `ft_quote_word`
+ * 2. otherwise appends current char literally
+ * 3. advances index according to the consumed input
+ *
+ * Return:
+ * * `0` on success
+ * * `SYNTAX_ERROR` for quote parsing errors
+ * * `-1` on allocation failure
+ */
+int	read_word_char(char *line, int *index, char **word)
+{
+	int	result;
+
+	if (line[*index] == '\'' || line[*index] == '"')
+	{
+		result = ft_quote_word(line, index, word);
+		if (result != 0)
+			return (result);
+		return (0);
+	}
+	if (ft_add_char(word, line[*index]) == -1)
+		return (-1);
+	(*index)++;
+	return (0);
+}
+
+/**Reads one full shell word until a delimiter is reached.
+ *
+ * Delimiters are:
+ * * whitespace
+ * * operators (`|`, `<`, `>`)
+ * * end of input
+ *
+ * How it works:
+ * 1. loops while current char is part of the same word
+ * 2. marks `started` once at least one char belongs to the word
+ * 3. delegates per-character logic to `read_word_char`
+ * 4. propagates helper return codes directly to the caller
+ *
+ * This function controls word boundaries; character details are handled
+ * by `read_word_char`.
  */
 int	ft_read_word(char *line, int *index, char **word, int *started)
 {
@@ -104,18 +110,9 @@ int	ft_read_word(char *line, int *index, char **word, int *started)
 		if (ft_isspace(line[*index]) || ft_isoperator(line[*index]))
 			break ;
 		*started = 1;
-		if (line[*index] == '\'' || line[*index] == '"')
-		{
-			result = ft_quote_word(line, index, word);
-			if (result != 0)
-				return (result);
-		}
-		else
-		{
-			if (ft_add_char(word, line[*index]) == -1)
-				return (-1);
-			(*index)++;
-		}
+		result = read_word_char(line, index, word);
+		if (result != 0)
+			return (result);
 	}
 	return (0);
 }

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 20:33:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:47:06 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:09:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,27 +101,64 @@ int	handle_redir_in(t_cmd *cmd, t_token *cur)
 }
 
 /**
- * Purpose: scan tokens and extract all redirections in the command.
- * 
+ * Purpose: validate and apply one redirection operator token.
+ *
  * How it works:
- * 1. walk token list until pipe
- * 2. detect redirection token
- * 3. validate next token
- * 4. call `set_redirection` or `handle_redir_in`
- * 5. continue scanning
+ * 1. checks that the redirection has a following `T_WORD` target
+ * 2. reports `ambiguous redirect` when target token is missing/invalid
+ * 3. for non-pipeline commands, checks `< file` existence early
+ * 4. on missing infile, prints `minishell: <file>: No such file or directory`
+ * 5. delegates actual assignment/open checks to `set_redirection`
+ *
+ * Return:
+ * * `SUCCESS` when the redirection is valid and applied
+ * * `ERROR` when validation or setup fails
+ */
+int	handle_redirection_token(t_token *cur, int in_pipeline, t_cmd *cmd)
+{
+	if (!cur->next || cur->next->type != T_WORD)
+	{
+		ft_putstr_fd("minishell: ambiguous redirect\n", STDERR);
+		return (ERROR);
+	}
+	if (!in_pipeline && cur->type == T_REDIR_IN
+		&& access(cur->next->value, F_OK) != 0)
+	{
+		ft_putstr_fd("minishell: ", STDERR);
+		ft_putstr_fd(cur->next->value, STDERR);
+		ft_putstr_fd(": No such file or directory\n", STDERR);
+		return (ERROR);
+	}
+	if (set_redirection(cmd, cur) != SUCCESS)
+		return (ERROR);
+	return (SUCCESS);
+}
+
+/**
+ * Purpose: walk a command segment and collect all redirections into `t_cmd`.
+ *
+ * How it works:
+ * 1. determines whether current token range belongs to a pipeline command
+ * 2. iterates tokens until `T_PIPE` boundary
+ * 3. when a redirection operator is found, calls `handle_redirection_token`
+ * 4. skips the consumed redirection target token
+ * 5. returns immediately on the first redirection error
+ *
+ * This function keeps token traversal logic centralized and delegates
+ * redirection validation details to `handle_redirection_token`.
  */
 int	parse_redirections(t_token *tokens, t_cmd *cmd)
 {
 	t_token	*cur;
+	int		in_pipeline;
 
 	cur = tokens;
+	in_pipeline = segment_has_pipe(tokens);
 	while (cur && cur->type != T_PIPE)
 	{
 		if (ft_isredirection(cur->type))
 		{
-			if (!cur->next || cur->next->type != T_WORD)
-				return (-1);
-			if (set_redirection(cmd, cur) != SUCCESS)
+			if (handle_redirection_token(cur, in_pipeline, cmd) != SUCCESS)
 				return (ERROR);
 			cur = cur->next;
 		}
@@ -129,33 +166,3 @@ int	parse_redirections(t_token *tokens, t_cmd *cmd)
 	}
 	return (SUCCESS);
 }
-
-/*int parse_redirections(t_token *tokens, t_cmd *cmd)
-{
-	t_token *cur;
-	int     ret;
-
-	cur = tokens;
-	while (cur && cur->type != T_PIPE)
-	{
-		if (ft_isredirection(cur->type))
-		{
-			if (!cur->next || cur->next->type != T_WORD)
-				return (-1);
-			if (cur->type == T_REDIR_IN)
-			{
-				ret = handle_redir_in(cmd, cur);
-				if (ret < 0)
-					return (-1);
-				if (ret > 0)
-					return (0);
-			}
-			ret = set_redirection(cmd, cur);
-			if (ret != 0)
-				return (ret);
-			cur = cur->next;
-		}
-		cur = cur->next;
-	}
-	return (SUCCESS);
-}*/

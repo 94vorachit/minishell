@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:32:23 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 15:27:46 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 19:14:00 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,44 +100,4 @@ void	update_parent_pipe(int *prev_fd, t_cmd *cur, int pipefd[2])
 		close(pipefd[1]);
 		*prev_fd = pipefd[0];
 	}
-}
-
-/**
- * The actual child logic for one pipeline command
- * 
- * Behavior:
- * 1. setup_child_io(...)
- * 2. redirect_child_cmd(...)
- * 3. if command is builtin:
- * * exit(execute_builtin(data, cur));
- * 4. else:
- * * find executable path
- * * build envp
- * * if path or env is missing, exit with 126
- * 5. execve(path, cur->argv, envp);
- * 6. if execve fails:
- * * print perror("execve")
- * * exit with 126
- * 
- * This function is the child process execution step for 
- * each pipeline command.
- */
-void	run_child_cmd(t_data *data, t_cmd *cur, int prev_fd, int pipefd[2])
-{
-	char	*path;
-	char	**envp;
-
-	sig_default();
-	setup_child_io(cur, prev_fd, pipefd);
-	if (redirect_child_cmd(cur) == -1)
-		exit(ERROR);
-	if (is_builtin(cur->argv[0]))
-		exit(execute_builtin(data, cur));
-	path = find_executable_path(data->env, cur->argv[0]);
-	envp = env_to_char_array(data->env);
-	if (!path || !envp)
-		exit(126);
-	execve(path, cur->argv, envp);
-	perror(path);
-	exit(126);
 }

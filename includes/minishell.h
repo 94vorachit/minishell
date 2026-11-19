@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:59:11 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:17:04 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 # include <readline/history.h>
 # include <sys/types.h> //pid_t
 # include <sys/wait.h> //waitpid()
+# include <sys/stat.h>
 # include <unistd.h> //fork, execve, dup, close, pipe, access, write, read,
 # include <stddef.h> //size_t appears in the header structs
 
@@ -157,6 +158,10 @@ int		ft_validate_syntax(t_token *tokens);
 int		word_has_quote(const char *word);
 void	remove_empty_word(t_token **tokens, t_token **cur, t_token **pre);
 
+void	ft_print_syntax_error(t_token *token);
+void	ft_print_syntax_error_str(char *value);
+void	ft_print_syntax_eof(void);
+
 /* expand */
 int		is_var_start(char c);
 int		is_var_char(char c);
@@ -189,6 +194,8 @@ int		ft_count_env(t_env *env);
 int		ft_copy_env(char **arr, t_env *env);
 char	*find_executable_path(t_env *env, const char *cmd);
 void	ft_free_cmd_list(t_cmd **cmds);
+void	print_exec_not_found(char *cmd);
+int		is_directory_path(const char *path);
 
 int		run_builtin_cmd(t_data *data, t_cmd *cmd);
 int		run_external_cmd(t_data *data, t_cmd *cmd);
@@ -203,6 +210,8 @@ int		execute_simple_cmd(t_data *data, t_cmd *cmd);
 int		execute_pipeline(t_data *data, t_cmd *cmd);
 void	update_parent_pipe(int *prev_fd, t_cmd *cur, int pipefd[2]);
 void	run_child_cmd(t_data *data, t_cmd *cur, int prev_fd, int pipefd[2]);
+void	run_external_child_cmd(t_data *data, t_cmd *cur);
+int		segment_has_pipe(t_token *tokens);
 
 int		prepare_execution(t_data *data, t_cmd *cmd,
 			char **exec_path, char ***envp);

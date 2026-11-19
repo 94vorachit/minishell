@@ -6,11 +6,35 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 14:45:58 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 19:35:21 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Purpose: run one command node inside a pipeline child process.
+ * 
+ * How it works:
+ * 1. restores default signal handling in child context
+ * 2. connects stdin/stdout to the proper pipe ends
+ * 3. applies command-level input/output redirections
+ * 4. if command is a builtin, executes it and exits with builtin status
+ * 5. otherwise delegates to external command runner
+ * 
+ * This function is the child-side entry point used after fork
+ * for each stage of the pipeline.
+ */
+void	run_child_cmd(t_data *data, t_cmd *cur, int prev_fd, int pipefd[2])
+{
+	sig_default();
+	setup_child_io(cur, prev_fd, pipefd);
+	if (redirect_child_cmd(cur) == -1)
+		exit(ERROR);
+	if (is_builtin(cur->argv[0]))
+		exit(execute_builtin(data, cur));
+	run_external_child_cmd(data, cur);
+}
 
 /**
  * Creates the pipeline and forks all child processes
