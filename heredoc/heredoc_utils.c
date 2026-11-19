@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 19:47:53 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 17:08:44 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 20:29:29 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ int	write_heredoc_to_pipe(char *delim, int fd)
 
 	while (1)
 	{
-		line = readline("heredoc> ");
+		line = readline("> ");
 		if (!line)
 			break ;
 		if (ft_strcmp(line, delim) == 0)
