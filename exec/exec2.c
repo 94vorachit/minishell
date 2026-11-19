@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:48:19 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,17 +28,11 @@ int	prepare_execution(t_data *data, t_cmd *cmd, char **exec_path, char ***envp)
 	if (!*exec_path)
 	{
 		if (ft_strchr(cmd->argv[0], '/'))
-		{
 			ft_putstr_fd("minishell: no such file or directory: ", STDERR);
-			ft_putstr_fd(cmd->argv[0], STDERR);
-			ft_putstr_fd("\n", STDERR);
-		}
 		else
-		{
 			ft_putstr_fd("minishell: command not found: ", STDERR);
-			ft_putstr_fd(cmd->argv[0], STDERR);
-			ft_putstr_fd("\n", STDERR);
-		}
+		ft_putstr_fd(cmd->argv[0], STDERR);
+		ft_putstr_fd("\n", STDERR);
 		data->status = 127;
 		return (-1);
 	}

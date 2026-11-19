@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 13:52:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 17:04:33 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,73 +32,35 @@ int	execute_input_chunk(t_data *data, t_cmd *cmd, char *chunk)
 }
 
 /**
- * Purpose: Support input containing multiple lines, 
- * such as piped input or pasted text.
- * 
+ * Purpose: execute multiline input without re-executing heredoc body lines.
+ *
  * How it works:
- * 1. Checks whether line contains a newline.
- * 2. If it is a single-line input, delegates directly to execute_input_chunk().
- * 3. Otherwise, splits the input using '\n'.
- * 4. Executes each resulting chunk independently.
- * 5. Frees the split array after execution.
+ * 1. split the line by '\n' into chunks
+ * 2. execute heredoc command chunks first
+ * 3. mark heredoc body + delimiter lines as skipped
+ * 4. execute only the remaining chunks
  */
-static char	*get_heredoc_delimiter(char *chunk)
-{
-	char	*pos;
-	char	*end;
-
-	pos = ft_strstr(chunk, "<<");
-	if (!pos)
-		return (NULL);
-	pos += 2;
-	while (*pos && ft_isspace((unsigned char)*pos))
-		pos++;
-	if (!*pos)
-		return (NULL);
-	end = pos;
-	while (*end && !ft_isspace((unsigned char)*end)
-		&& *end != '<' && *end != '>' && *end != '|')
-		end++;
-	return (ft_substr(pos, 0, end - pos));
-}
-
 int	handle_multiline_input(t_data *data, t_cmd *cmd, char *line)
 {
 	char	**chunks;
-	char	*delimiter;
-	int		i;
+	int		*skip;
+	int		chunk_count;
 
 	if (!ft_strchr(line, '\n'))
 		return (execute_input_chunk(data, cmd, line));
 	chunks = ft_split(line, '\n');
 	if (!chunks)
 		return (ERROR);
-	delimiter = get_heredoc_delimiter(chunks[0]);
-	if (delimiter)
-		execute_input_chunk(data, cmd, chunks[0]);
-	else
+	chunk_count = count_chunks(chunks);
+	skip = ft_calloc(chunk_count, sizeof(int));
+	if (!skip)
 	{
-		i = 0;
-		while (chunks[i])
-		{
-			execute_input_chunk(data, cmd, chunks[i]);
-			i++;
-		}
 		ft_free_split(chunks);
-		return (SUCCESS);
+		return (ERROR);
 	}
-	i = 1;
-	while (chunks[i])
-	{
-		if (ft_strcmp(chunks[i], delimiter) == 0)
-		{
-			free(delimiter);
-			delimiter = NULL;
-			break ;
-		}
-		i++;
-	}
-	free(delimiter);
+	execute_heredoc_chunks_first(data, cmd, chunks, skip);
+	execute_remaining_chunks(data, cmd, chunks, skip);
+	free(skip);
 	ft_free_split(chunks);
 	return (SUCCESS);
 }

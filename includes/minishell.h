@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:59:11 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,15 @@ int		execute_pipeline_cmds(t_data *data);
 int		run_simple_cmd_from_tokens(t_data *data, t_cmd *cmd);
 int		execute_token_stream(t_data *data, t_cmd *cmd, char *line);
 int		handle_multiline_input(t_data *data, t_cmd *cmd, char *line);
-int		main(int ac, char **av, char **env);
+
+int		execute_input_chunk(t_data *data, t_cmd *cmd, char *chunk);
+int		count_chunks(char **chunks);
+void	execute_heredoc_chunks_first(t_data *data, t_cmd *cmd,
+			char **chunks, int *skip);
+void	execute_remaining_chunks(t_data *data, t_cmd *cmd,
+			char **chunks, int *skip);
+
+// int		main(int ac, char **av, char **env);
 
 char	*env_get(t_env *env, const char *name);
 t_env	*env_find(t_env *env, char *name);
@@ -186,6 +194,8 @@ int		run_builtin_cmd(t_data *data, t_cmd *cmd);
 int		run_external_cmd(t_data *data, t_cmd *cmd);
 int		redirect_input(t_cmd *cmd);
 int		redirect_output(t_cmd *cmd);
+int		open_output_file(t_cmd *cmd);
+
 void	run_child(t_cmd *cmd, char *exec_path, char **envp);
 void	set_child_status(t_data *data, int status);
 int		run_process(t_data *data, t_cmd *cmd, char *exec_path, char **envp);
@@ -218,5 +228,6 @@ int		prepare_heredoc_cmd(t_cmd *cmd);
 int		prepare_heredoc_list(t_cmd *cmds);
 int		write_heredoc_to_pipe(char *delim, int fd);
 int		append_input_file_to_fd(char *infile, int fd);
+char	*get_heredoc_delimiter(char *str);
 
 #endif

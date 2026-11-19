@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 14:18:47 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 17:04:33 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,11 @@
  * How it works:
  * 1. configures heredoc signal behavior
  * 2. closes the pipe read-end
- * 3. writes heredoc lines to the pipe write-end
- * 4. closes the write-end and exits
+ * 3. when there is no argv, writes heredoc text into `outfile`
+ *    (and optionally appends `infile` content after it)
+ * 4. otherwise writes heredoc data to the pipe write-end
+ *    (and optionally appends `infile` content after it)
+ * 5. closes active write fd and exits
  *
  * This keeps heredoc reading separate from the main shell loop.
  */
@@ -33,12 +36,7 @@ void	run_heredoc_child(t_cmd *cmd, int pipefd[2])
 	{
 		output_fd = -1;
 		if (cmd->outfile)
-		{
-			if (cmd->append)
-				output_fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
-			else
-				output_fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		}
+			output_fd = open_output_file(cmd);
 		if (output_fd >= 0)
 		{
 			write_heredoc_to_pipe(cmd->heredoc, output_fd);

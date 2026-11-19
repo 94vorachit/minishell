@@ -6,11 +6,37 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/09 19:47:53 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 17:08:44 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
+
+/**
+ * Purpose: extract heredoc delimiter text from a chunk containing `<<`.
+ *
+ * How it works: finds `<<`, skips spaces, then copies characters until
+ * whitespace or another shell operator (`<`, `>`, `|`).
+ */
+char	*get_heredoc_delimiter(char *str)
+{
+	char	*pos;
+	char	*end;
+
+	pos = ft_strstr(str, "<<");
+	if (!pos)
+		return (NULL);
+	pos += 2;
+	while (*pos && ft_isspace((unsigned char)*pos))
+		pos++;
+	if (!*pos)
+		return (NULL);
+	end = pos;
+	while (*end && !ft_isspace((unsigned char)*end)
+		&& *end != '<' && *end != '>' && *end != '|')
+		end++;
+	return (ft_substr(pos, 0, end - pos));
+}
 
 /**
  * Purpose: read user input line by line until the delimiter is found.
