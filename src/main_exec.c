@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 13:52:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 13:57:57 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,30 @@ int	execute_input_chunk(t_data *data, t_cmd *cmd, char *chunk)
  * 4. Executes each resulting chunk independently.
  * 5. Frees the split array after execution.
  */
+static char	*get_heredoc_delimiter(char *chunk)
+{
+	char	*pos;
+	char	*end;
+
+	pos = ft_strstr(chunk, "<<");
+	if (!pos)
+		return (NULL);
+	pos += 2;
+	while (*pos && ft_isspace((unsigned char)*pos))
+		pos++;
+	if (!*pos)
+		return (NULL);
+	end = pos;
+	while (*end && !ft_isspace((unsigned char)*end)
+		&& *end != '<' && *end != '>' && *end != '|')
+		end++;
+	return (ft_substr(pos, 0, end - pos));
+}
+
 int	handle_multiline_input(t_data *data, t_cmd *cmd, char *line)
 {
 	char	**chunks;
+	char	*delimiter;
 	int		i;
 
 	if (!ft_strchr(line, '\n'))
@@ -52,12 +73,32 @@ int	handle_multiline_input(t_data *data, t_cmd *cmd, char *line)
 	chunks = ft_split(line, '\n');
 	if (!chunks)
 		return (ERROR);
-	i = 0;
+	delimiter = get_heredoc_delimiter(chunks[0]);
+	if (delimiter)
+		execute_input_chunk(data, cmd, chunks[0]);
+	else
+	{
+		i = 0;
+		while (chunks[i])
+		{
+			execute_input_chunk(data, cmd, chunks[i]);
+			i++;
+		}
+		ft_free_split(chunks);
+		return (SUCCESS);
+	}
+	i = 1;
 	while (chunks[i])
 	{
-		execute_input_chunk(data, cmd, chunks[i]);
+		if (ft_strcmp(chunks[i], delimiter) == 0)
+		{
+			free(delimiter);
+			delimiter = NULL;
+			break ;
+		}
 		i++;
 	}
+	free(delimiter);
 	ft_free_split(chunks);
 	return (SUCCESS);
 }

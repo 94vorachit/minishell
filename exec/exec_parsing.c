@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/29 15:42:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 18:42:00 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ int	init_simple_cmd(t_cmd *cmd)
 	cmd->append = 0;
 	cmd->next = NULL;
 	cmd->argv = NULL;
+	cmd->input_heredoc = 0;
 	return (0);
 }
 

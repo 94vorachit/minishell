@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/03 15:29:46 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 15:40:41 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,10 +116,8 @@ int	run_external_cmd(t_data *data, t_cmd *cmd)
  */
 int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 {
-	if (!data || !cmd || !cmd->argv || !cmd->argv[0])
-		return (SUCCESS);
-	if (cmd->argv[0][0] == '\0')
-		return (SUCCESS);
+	if (!data || !cmd)
+		return (ERROR);
 	if (prepare_heredoc_list(cmd) == -1)
 	{
 		if (g_signal == SIGINT || g_signal == SIGQUIT)
@@ -128,6 +126,8 @@ int	execute_simple_cmd(t_data *data, t_cmd *cmd)
 			data->status = 130;
 		return (data->status);
 	}
+	if (!cmd->argv || !cmd->argv[0] || cmd->argv[0][0] == '\0')
+		return (SUCCESS);
 	if (is_builtin(cmd->argv[0]))
 		return (run_builtin_cmd(data, cmd));
 	return (run_external_cmd(data, cmd));

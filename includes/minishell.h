@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 15:06:23 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ typedef struct s_cmd
 	char			*heredoc;
 	int				heredoc_fd;
 	int				append;
+	int				input_heredoc;
 	struct s_cmd	*next;
 }	t_cmd;
 

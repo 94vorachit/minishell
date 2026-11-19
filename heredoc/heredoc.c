@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 14:18:47 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 15:13:52 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,15 +19,36 @@
  * 1. configures heredoc signal behavior
  * 2. closes the pipe read-end
  * 3. writes heredoc lines to the pipe write-end
- * 4. if an input file was supplied, appends its contents
- * 5. closes the write-end and exits
+ * 4. closes the write-end and exits
  *
  * This keeps heredoc reading separate from the main shell loop.
  */
 void	run_heredoc_child(t_cmd *cmd, int pipefd[2])
 {
+	int	output_fd;
+
 	sig_heredoc();
 	close(pipefd[0]);
+	if (!cmd->argv || !cmd->argv[0])
+	{
+		output_fd = -1;
+		if (cmd->outfile)
+		{
+			if (cmd->append)
+				output_fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_APPEND, 0644);
+			else
+				output_fd = open(cmd->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		}
+		if (output_fd >= 0)
+		{
+			write_heredoc_to_pipe(cmd->heredoc, output_fd);
+			if (cmd->infile)
+				append_input_file_to_fd(cmd->infile, output_fd);
+			close(output_fd);
+		}
+		close(pipefd[1]);
+		exit(0);
+	}
 	write_heredoc_to_pipe(cmd->heredoc, pipefd[1]);
 	if (cmd->infile)
 		append_input_file_to_fd(cmd->infile, pipefd[1]);

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 20:33:48 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 17:45:19 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 16:22:58 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,21 +118,13 @@ int	parse_redirections(t_token *tokens, t_cmd *cmd)
 	while (cur && cur->type != T_PIPE)
 	{
 		if (ft_isredirection(cur->type))
-		{
-			if (!cur->next || cur->next->type != T_WORD)
-				return (-1);
-			if ((cur->type == T_REDIR_IN)
-				&& (handle_redir_in(cmd, cur) != SUCCESS))
 			{
-				if ((handle_redir_in(cmd, cur) < 0))
+				if (!cur->next || cur->next->type != T_WORD)
 					return (-1);
-				else
-					return (0);
+				if (set_redirection(cmd, cur) != SUCCESS)
+					return (ERROR);
+				cur = cur->next;
 			}
-			if (set_redirection(cmd, cur) != SUCCESS)
-				return (ERROR);
-			cur = cur->next;
-		}
 		cur = cur->next;
 	}
 	return (SUCCESS);
