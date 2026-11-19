@@ -6,30 +6,31 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 14:18:47 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/09 21:44:48 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 15:13:52 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Purpose: the child process that reads the heredoc text.
- * 
+ * Purpose: run heredoc input collection inside a child process.
+ *
  * How it works:
- * 1. calls `sig_heredoc()` to configure signal behavior for heredoc mode
- * 2. closes the read-end of the pipe
- * 3. calls `write_heredoc_to_pipe(cmd->heredoc, pipefd[1])`
- * 4. closes the write-end
- * 5. exits with `0`
- * 
- * This runs in a child process so the shell can keep waiting without 
- * blocking the main shell loop.
+ * 1. configures heredoc signal behavior
+ * 2. closes the pipe read-end
+ * 3. writes heredoc lines to the pipe write-end
+ * 4. if an input file was supplied, appends its contents
+ * 5. closes the write-end and exits
+ *
+ * This keeps heredoc reading separate from the main shell loop.
  */
 void	run_heredoc_child(t_cmd *cmd, int pipefd[2])
 {
 	sig_heredoc();
 	close(pipefd[0]);
 	write_heredoc_to_pipe(cmd->heredoc, pipefd[1]);
+	if (cmd->infile)
+		append_input_file_to_fd(cmd->infile, pipefd[1]);
 	close(pipefd[1]);
 	exit(0);
 }

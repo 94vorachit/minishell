@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 14:21:19 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 15:06:23 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -216,5 +216,6 @@ int		builtin_exit(t_data *data, t_cmd *cmd);
 int		prepare_heredoc_cmd(t_cmd *cmd);
 int		prepare_heredoc_list(t_cmd *cmds);
 int		write_heredoc_to_pipe(char *delim, int fd);
+int		append_input_file_to_fd(char *infile, int fd);
 
 #endif
