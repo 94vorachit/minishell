@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 18:02:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/10 18:37:51 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 13:52:27 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,8 @@ void	apply_signal_status(t_data *data)
 }
 
 /**
- * Purpose: decide whether the current input line should be ignored, exit, or continue.
+ * Purpose: decide whether the current input line should be ignored,
+ *  exit, or continue.
  *
  * How it works:
  * 1. if `readline()` returns NULL, print `exit` and clean shell memory

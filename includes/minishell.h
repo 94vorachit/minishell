@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 13:19:35 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:01:17 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,7 @@ int		handle_input_line(t_data *data, char **line);
 int		execute_pipeline_cmds(t_data *data);
 int		run_simple_cmd_from_tokens(t_data *data, t_cmd *cmd);
 int		execute_token_stream(t_data *data, t_cmd *cmd, char *line);
+int		handle_multiline_input(t_data *data, t_cmd *cmd, char *line);
 int		main(int ac, char **av, char **env);
 
 char	*env_get(t_env *env, const char *name);
