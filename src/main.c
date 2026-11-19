@@ -6,23 +6,24 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 15:53:51 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 13:53:15 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:28:12 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/minishell.h"
 
 /**
- * Purpose: main shell loop for interactive input processing.
+ * Purpose: run the main minishell input and execution loop.
  *
  * How it works:
- * 1. initialize shell state and signal handlers
- * 2. read one line with readline()
- * 3. handle EOF or empty lines via `handle_input_line()`
- * 4. add valid input to history and execute it
- * 5. clean token list and input buffer each iteration
+ * 1. validate startup arguments and initialize shell state
+ * 2. install signal handlers
+ * 3. read input with `readline()` and apply any signal status
+ * 4. handle EOF or empty input with `handle_input_line()`
+ * 5. execute normal input as one or more command chunks
+ * 6. free the current input line and continue the loop
  *
- * Return: the last shell status when the shell exits.
+ * Return: the shell status on normal program exit.
  */
 int	main(int ac, char **av, char **env)
 {
@@ -41,8 +42,6 @@ int	main(int ac, char **av, char **env)
 		line = readline("minishell > ");
 		apply_signal_status(data);
 		line_state = handle_input_line(data, &line);
-		if (line_state == 1)
-			return (data->status);
 		if (line_state == 2)
 			continue ;
 		if (handle_multiline_input(data, &cmd, line) == ERROR)

@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 18:02:41 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 13:52:27 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:26:39 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,22 +77,20 @@ void	apply_signal_status(t_data *data)
 }
 
 /**
- * Purpose: decide whether the current input line should be ignored,
- *  exit, or continue.
+ * Purpose: classify the current readline input line.
  *
  * How it works:
- * 1. if `readline()` returns NULL, print `exit` and clean shell memory
- * 2. if the line is empty, free it and skip processing
- * 3. otherwise accept the line as normal input
+ * 1. if readline returned NULL, print `exit` and return EOF state
+ * 2. if the line is empty, free it and return skip state
+ * 3. otherwise return normal input state
  *
- * Return: 1 to exit, 2 to skip the current iteration, 0 to continue.
+ * Return: 1 for EOF, 2 for an empty line, 0 for normal input.
  */
-int	check_line_state(t_data *data, char **line)
+int	check_line_state(char **line)
 {
 	if (!*line)
 	{
 		ft_putstr_fd("exit\n", STDERR);
-		free_shell(data);
 		return (1);
 	}
 	if ((*line)[0] == '\0')
@@ -104,25 +102,27 @@ int	check_line_state(t_data *data, char **line)
 }
 
 /**
- * Purpose: wrap the shell line-state handling in one named helper.
+ * Purpose: handle EOF or empty readline input and free shell state on EOF.
  *
  * How it works:
- * 1. call `check_line_state()`
- * 2. if exit was requested, return 1
- * 3. if the line should be skipped, return 2
- * 4. otherwise return 0 to keep processing
+ * 1. classify the line with `check_line_state()`
+ * 2. if EOF is detected, save the status, free shell memory, and exit
+ * 3. if the line is empty, return 2 so the main loop skips it
+ * 4. otherwise return 0 so the main loop executes normal input
  *
- * Return: 1 for exit, 2 for skip, 0 for continue processing.
+ * Return: 2 for an empty line, 0 for normal input.
  */
 int	handle_input_line(t_data *data, char **line)
 {
 	int	line_state;
+	int	status;
 
-	line_state = check_line_state(data, line);
+	line_state = check_line_state(line);
 	if (line_state == 1)
 	{
+		status = data->status;
 		free_shell(data);
-		return (1);
+		exit(status);
 	}
 	if (line_state == 2)
 		return (2);

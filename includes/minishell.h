@@ -6,7 +6,7 @@
 /*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/10 19:00:13 by vorhansa          #+#    #+#             */
-/*   Updated: 2026/11/19 14:01:17 by vorhansa         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:21:19 by vorhansa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,7 +102,7 @@ int		ft_init_env(t_env **mini_env, char **env);
 int		check_args(int ac, char **av);
 int		setup_data(t_data **data, char **env);
 void	apply_signal_status(t_data *data);
-int		check_line_state(t_data *data, char **line);
+int		check_line_state(char **line);
 int		handle_input_line(t_data *data, char **line);
 
 int		execute_pipeline_cmds(t_data *data);
