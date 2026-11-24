@@ -1,0 +1,39 @@
+NAME = minishell
+CC = cc
+CFLAGS = -Wall -Wextra -Werror
+
+SRC = $(wildcard src/*.c) \
+	$(wildcard signal/*.c) \
+	$(wildcard token/*.c) \
+	$(wildcard expand/*.c) \
+	$(wildcard exec/*.c) \
+	$(wildcard builtin/*.c) \
+	$(wildcard pipe/*.c) \
+	$(wildcard heredoc/*.c)
+	
+OBJ = $(SRC:.c=.o)
+LDLIBS = -lreadline
+
+all: $(NAME)
+
+$(NAME): $(OBJ)
+	@$(MAKE) -C libft
+	@$(CC) $(CFLAGS) $(OBJ) $(LDLIBS) libft/libft.a -o $(NAME)
+
+# lint:
+# 	./clang-tidy-23_linux-amd64 --checks='clang-analyzer-*' $(SRC)
+
+%.o: %.c
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	@$(MAKE) clean -C ./libft/
+	@rm -f $(OBJ)
+
+fclean: clean
+	@$(MAKE) fclean -C ./libft/
+	@rm -f $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re

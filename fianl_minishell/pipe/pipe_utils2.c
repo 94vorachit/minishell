@@ -1,0 +1,103 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   pipe_utils2.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/11/03 14:32:23 by vorhansa          #+#    #+#             */
+/*   Updated: 2026/11/20 15:26:08 by vorhansa         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/minishell.h"
+
+/**
+ * Counts how many commands are in the linked list
+ */
+int	ft_count_cmds(t_cmd *cmd)
+{
+	int	count;
+
+	count = 0;
+	while (cmd)
+	{
+		count++;
+		cmd = cmd->next;
+	}
+	return (count);
+}
+
+/**
+ * Connects the child process to the correct pipe ends
+ * 
+ * Behavior:
+ * 1. if there is a previous pipe (`prev_fd != -1`):
+ * * duplicate `prev_fd` to `STDIN_FILENO`
+ * * close `prev_fd`
+ * 2. if this command has a next command (`cur->next`):
+ * * duplicate `pipefd[1]` to `STDOUT_FILENO`
+ * * close `pipefd[0]` and `pipefd[1]`
+ * 
+ * This is the core of pipeline I/O wiring:
+ * * previous command writes to this command’s stdin
+ * * this command writes to next command’s stdin through the pipe
+ */
+void	ft_setup_child_io(t_cmd *cur, int prev_fd, int pipefd[2])
+{
+	if (prev_fd != -1)
+	{
+		dup2(prev_fd, STDIN_FILENO);
+		close(prev_fd);
+	}
+	if (cur->next)
+	{
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[0]);
+		close(pipefd[1]);
+	}
+}
+
+/**
+ * Applies the command’s own redirections inside the child
+ * 
+ * Behavior:
+ * 1. if cur->infile exists, call ft_redir_input(cur)
+ * 2. if cur->outfile exists, call ft_redir_output(cur)
+ * 3. returns -1 on failure
+ * 
+ * This lets a command like:
+ * `cat < infile | wc > out`
+ * 
+ * redirect its input/output correctly before execution.
+ */
+int	ft_redir_child_cmd(t_cmd *cur)
+{
+	if ((cur->infile || cur->heredoc_fd != -1) && ft_redir_input(cur) == -1)
+		return (-1);
+	if (cur->outfile && ft_redir_output(cur) == -1)
+		return (-1);
+	return (0);
+}
+
+/**
+ * Updates the parent side of the pipeline after forking a child
+ * 
+ * Behavior:
+ * 1. closes the old prev_fd if it exists
+ * 2. if the current command has a next command:
+ * * close pipefd[1]
+ * * set *prev_fd = pipefd[0]
+ * 
+ * This keeps the parent’s pipe state moving forward through the pipeline.
+ */
+void	ft_update_parent_pipe(int *prev_fd, t_cmd *cur, int pipefd[2])
+{
+	if (*prev_fd != -1)
+		close(*prev_fd);
+	if (cur->next)
+	{
+		close(pipefd[1]);
+		*prev_fd = pipefd[0];
+	}
+}

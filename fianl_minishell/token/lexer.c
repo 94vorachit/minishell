@@ -1,0 +1,140 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   lexer.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vorhansa <vorhansa@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/27 20:24:12 by vorhansa          #+#    #+#             */
+/*   Updated: 2026/11/20 16:27:24 by vorhansa         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/minishell.h"
+
+/**
+ * Prints the whole token list.
+ * 
+ * It loops through the linked list and prints:
+ * * token value
+ * * token type
+ * 
+ * Example output:
+ * * `value = [|], type = 0`
+ * 
+ * This is useful for debugging the ft_lexer.
+ */
+void	ft_print_tokens(t_token *tokens)
+{
+	while (tokens)
+	{
+		printf("value = [%s], type = %d\n",
+			tokens->value, tokens->type);
+		tokens = tokens->next;
+	}
+}
+
+/**
+ * Detects and creates the value string for operators.
+ * 
+ * It checks in order:
+ * * pipe `|`
+ * * heredoc `<<`
+ * * append `>>`
+ * * input redirect `<`
+ * * output redirect `>`
+ * 
+ * It uses helper functions to decide which operator matches 
+ * the current character.
+ * 
+ * Important behavior:
+ * * `<<` and `>>` consume two characters
+ * * the index is advanced in the helper functions
+ * * it returns the string for the operator, such as `|`, `<`, `>>`, etc.
+ */
+char	*ft_operator_value(char *line, int *index, t_token_type *type)
+{
+	char	*value;
+
+	value = ft_set_pipe_token(line, index, type);
+	if (value)
+		return (value);
+	value = ft_set_heredoc_token(line, index, type);
+	if (value)
+		return (value);
+	value = ft_set_append_token(line, index, type);
+	if (value)
+		return (value);
+	value = ft_set_redir_in_token(line, index, type);
+	if (value)
+		return (value);
+	value = ft_set_redir_out_token(line, index, type);
+	if (value)
+		return (value);
+	return (NULL);
+}
+
+/**
+ * Takes the current operator and turns it into a real token.
+ * 
+ * Flow:
+ * 1. detect the operator string with `ft_operator_value`
+ * 2. if detection fails, return error
+ * 3. advance the input index
+ * 4. add the token to the token list with `ft_add_token`
+ * 
+ * This is the step that converts raw shell operators into token objects.
+ */
+int	ft_lex_operator(char *line, int *index, t_token **tokens)
+{
+	char			*value;
+	t_token_type	type;
+
+	value = ft_operator_value(line, index, &type);
+	if (!value)
+		return (-1);
+	(*index)++;
+	if (ft_add_token(tokens, value, type) == -1)
+		return (-1);
+	return (0);
+}
+
+/**
+ * Main ft_lexer entry point.
+ * 
+ * It walks the whole input string from left to right.
+ * For each part:
+ * 1. skip spaces
+ * 2. stop if the string ends
+ * 3. decide whether the current character starts an operator
+ * 4. if yes: call `ft_lex_operator`
+ * 5. otherwise: call `ft_lex_word`
+ * 6. if any step fails, clear the token list and return an error
+ * 
+ * This function builds the full token list from the raw command line.
+ */
+int	ft_lexer(char *line, t_token **tokens)
+{
+	int	index;
+	int	result;
+
+	index = 0;
+	*tokens = NULL;
+	while (line[index])
+	{
+		while (line[index] && ft_isspace(line[index]))
+			index++;
+		if (!line[index])
+			break ;
+		if (ft_isoperator(line[index]))
+			result = ft_lex_operator(line, &index, tokens);
+		else
+			result = ft_lex_word(line, &index, tokens);
+		if (result != 0)
+		{
+			ft_token_clear(tokens);
+			return (result);
+		}
+	}
+	return (0);
+}
